@@ -17,6 +17,7 @@
             --text-secondary: #bdc1c6;
             --surface-color: #3c4043;
             --border-color: #5f6368;
+            --drag-handle-bg: rgba(255, 255, 255, 0.1);
         }
 
         * {
@@ -27,6 +28,7 @@
 
         html {
             scroll-behavior: smooth;
+            touch-action: manipulation;
         }
 
         body {
@@ -37,6 +39,7 @@
             overflow-x: hidden;
             display: flex;
             justify-content: center;
+            position: relative;
         }
 
         .hidden { display: none !important; }
@@ -136,6 +139,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            z-index: 1;
         }
         
         #interviewer-avatar {
@@ -163,10 +167,9 @@
             font-size: 1.2rem;
         }
 
+        /* --- DRAGGABLE ANSWER BOX --- */
         #user-view {
             position: absolute;
-            bottom: 110px;
-            right: 20px;
             width: 320px;
             height: 220px;
             background-color: #35363a;
@@ -176,15 +179,59 @@
             display: flex;
             flex-direction: column;
             z-index: 5;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            /* Initial position */
+            bottom: 110px;
+            right: 20px;
         }
-        
+
+        #user-view.dragging {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            z-index: 15;
+            transition: none;
+        }
+
+        #user-view.dragging .drag-handle {
+            background-color: var(--primary-blue);
+        }
+
+        .drag-handle {
+            background-color: var(--drag-handle-bg);
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            touch-action: none;
+            z-index: 10;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .drag-handle span {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
         #user-view-label {
             padding: 8px;
             font-size: 0.9rem;
             background: rgba(0,0,0,0.3);
+            flex-shrink: 0;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        #answer-input, #new-question-input {
+        #answer-input {
             flex-grow: 1;
             background: transparent;
             border: none;
@@ -193,6 +240,58 @@
             padding: 10px;
             resize: none;
             outline: none;
+            width: 100%;
+            height: 100%;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            cursor: text;
+        }
+
+        #answer-input:focus {
+            outline: 2px solid var(--primary-blue);
+            outline-offset: -2px;
+        }
+
+        #voice-command-hint {
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            padding: 0 10px 4px 10px; 
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            flex-shrink: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- SILENCE DETECTION INDICATOR --- */
+        .silence-indicator {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            transition: background 0.3s ease;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .silence-indicator.speaking {
+            background: var(--primary-blue);
+            animation: pulse-small 1s infinite;
+        }
+
+        .silence-indicator.silent {
+            background: var(--hangup-red);
+        }
+
+        @keyframes pulse-small {
+            0% { box-shadow: 0 0 0 0 rgba(138, 180, 248, 0.7); }
+            70% { box-shadow: 0 0 0 4px rgba(138, 180, 248, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(138, 180, 248, 0); }
         }
 
         /* Control Bar */
@@ -210,7 +309,11 @@
             z-index: 10;
         }
 
-        .control-group { display: flex; gap: 12px; align-items: center; }
+        .control-group { 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+        }
 
         .control-button {
             background-color: var(--surface-color);
@@ -224,6 +327,11 @@
             justify-content: center;
             align-items: center;
             transition: background-color 0.2s;
+            touch-action: manipulation;
+        }
+        
+        .control-button:hover {
+            background-color: #45474a;
         }
         
         .control-button.hang-up {
@@ -297,10 +405,18 @@
             gap: 12px;
         }
         
-        .chat-message .sender { font-weight: 700; margin-bottom: 4px;}
+        .chat-message .sender { 
+            font-weight: 700; 
+            margin-bottom: 4px;
+        }
         
         /* --- GENERIC & REUSED STYLES --- */
-        label { display: block; font-weight: 500; margin-bottom: 5px; color: var(--text-secondary); }
+        label { 
+            display: block; 
+            font-weight: 500; 
+            margin-bottom: 5px; 
+            color: var(--text-secondary); 
+        }
         input, select, textarea {
             width: 100%;
             padding: 10px;
@@ -320,18 +436,42 @@
         }
 
         .tab-button {
-            padding: 10px; cursor: pointer; border: none; background: transparent; color: var(--text-secondary);
-            font-size: 1rem; border-bottom: 2px solid transparent;
+            padding: 10px; 
+            cursor: pointer; 
+            border: none; 
+            background: transparent; 
+            color: var(--text-secondary);
+            font-size: 1rem; 
+            border-bottom: 2px solid transparent;
+            touch-action: manipulation;
         }
-        .tab-button.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); }
+        .tab-button.active { 
+            color: var(--primary-blue); 
+            border-bottom-color: var(--primary-blue); 
+        }
         .tab-pane { padding: 16px 0; }
         
         #summary-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-            background: rgba(0, 0, 0, 0.7); z-index: 30;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7); 
+            z-index: 30;
         }
-        #summary-content { background: var(--control-bar-bg); padding: 30px; border-radius: 8px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;}
+        #summary-content { 
+            background: var(--control-bar-bg); 
+            padding: 30px; 
+            border-radius: 8px; 
+            width: 100%; 
+            max-width: 500px; 
+            max-height: 90vh; 
+            overflow-y: auto;
+        }
 
         /* --- RESPONSIVE STYLES --- */
         @media screen and (max-width: 900px) {
@@ -343,17 +483,83 @@
         }
 
         @media screen and (max-width: 768px) {
-            .main-content { padding: 10px; padding-bottom: 90px; }
-            #user-view { width: 150px; height: 110px; bottom: 90px; right: 10px; }
-            #interviewer-message { font-size: 1rem; bottom: 10px; left: 10px; right: 10px; }
-            #control-bar { height: 70px; padding: 0 10px; flex-wrap: nowrap; }
-            #control-bar .control-group:first-child, #control-bar .control-group:last-child { flex-shrink: 0; }
-            #control-bar .control-group:nth-child(2) { justify-content: center; flex-grow: 1; }
+            .main-content { 
+                padding: 10px; 
+                padding-bottom: 90px; 
+            }
+            
+            #user-view { 
+                width: 280px; 
+                height: 200px; 
+                max-width: 90vw;
+                max-height: 40vh;
+            }
+            
+            #interviewer-message { 
+                font-size: 1rem; 
+                bottom: 10px; 
+                left: 10px; 
+                right: 10px; 
+            }
+            
+            #control-bar { 
+                height: 70px; 
+                padding: 0 10px; 
+                flex-wrap: nowrap; 
+            }
+            
+            #control-bar .control-group:first-child, 
+            #control-bar .control-group:last-child { 
+                flex-shrink: 0; 
+            }
+            
+            #control-bar .control-group:nth-child(2) { 
+                justify-content: center; 
+                flex-grow: 1; 
+            }
+            
             .control-group { gap: 6px; }
-            .control-button { width: 44px; height: 38px; }
+            .control-button { 
+                width: 44px; 
+                height: 38px; 
+            }
             .control-button.hang-up { width: 52px; }
+            
             .side-panel { width: 100%; }
-            #summary-content { max-width: 90vw; padding: 20px; }
+            #summary-content { 
+                max-width: 90vw; 
+                padding: 20px; 
+            }
+            
+            .drag-handle span {
+                font-size: 14px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            #user-view { 
+                width: 260px; 
+                height: 180px; 
+            }
+            
+            #control-bar .control-group:nth-child(2) {
+                gap: 4px;
+            }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .control-button:hover {
+                background-color: var(--surface-color);
+            }
+            
+            #user-view {
+                touch-action: pan-y pan-x;
+            }
+            
+            .drag-handle {
+                touch-action: none;
+            }
         }
     </style>
 </head>
@@ -409,10 +615,15 @@
                 <div id="interviewer-avatar"><span class="material-symbols-outlined" style="font-size: 60px;">smart_toy</span></div>
                 <div id="interviewer-message">Waiting to start...</div>
             </div>
+            
             <div id="user-view">
-                 <div id="user-view-label">Your Response</div>
-                 <textarea id="answer-input" placeholder="Type or use the mic to reply..."></textarea>
-                 <div id="voice-command-hint" style="font-size: 0.75rem; color: var(--text-secondary); padding: 0 10px 4px 10px; text-align: center;">
+                <div class="drag-handle" id="drag-handle">
+                    <span class="material-symbols-outlined">drag_indicator</span>
+                </div>
+                <div class="silence-indicator" id="silence-indicator"></div>
+                <div id="user-view-label">Your Response</div>
+                <textarea id="answer-input" placeholder="Type or use the mic to reply..."></textarea>
+                <div id="voice-command-hint">
                     Try: "send answer", "open chat", "end interview"
                 </div>
             </div>
@@ -462,19 +673,535 @@
         </footer>
     </div>
     
-    <div id="summary-modal" class="hidden"><div id="summary-content"><h2>Interview Summary</h2><div id="summary-details"></div><button id="close-summary-btn" style="margin-top: 20px; border-radius:24px; padding:10px 20px; border:none; cursor:pointer;">Back to Lobby</button></div></div>
+    <div id="summary-modal" class="hidden">
+        <div id="summary-content">
+            <h2>Interview Summary</h2>
+            <div id="summary-details"></div>
+            <button id="close-summary-btn" style="margin-top: 20px; border-radius:24px; padding:10px 20px; border:none; cursor:pointer;">Back to Lobby</button>
+        </div>
+    </div>
+    
     <audio id="audioPlayer"></audio>
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const lobbyScreen = document.getElementById('lobby-screen'), meetScreen = document.getElementById('meet-screen'), joinBtn = document.getElementById('join-btn'), hangUpBtn = document.getElementById('hang-up-btn'), sendAnswerBtn = document.getElementById('send-answer-btn'), toggleChatBtn = document.getElementById('toggle-chat-btn'), closeChatBtn = document.getElementById('close-chat-btn'), interviewerMessage = document.getElementById('interviewer-message'), chatHistory = document.getElementById('chat-history'), currentTimeEl = document.getElementById('current-time'), closeSummaryBtn = document.getElementById('close-summary-btn'), userIdInput=document.getElementById("user-id"),topicSelect=document.getElementById("topic-select"),answerInput=document.getElementById("answer-input"),summaryModal=document.getElementById("summary-modal"),summaryDetails=document.getElementById("summary-details"),apiKeyInput=document.getElementById("apiKey"),voiceSelect=document.getElementById("voiceSelect"),audioPlayer=document.getElementById("audioPlayer"),newTopicInput=document.getElementById("new-topic-input"),createTopicBtn=document.getElementById("create-topic-btn"),questionTopicSelect=document.getElementById("question-topic-select"),newQuestionInput=document.getElementById("new-question-input"),createQuestionBtn=document.getElementById("create-question-btn"), voiceReplyBtn = document.getElementById('voice-reply-btn');
+            const lobbyScreen = document.getElementById('lobby-screen'), 
+                  meetScreen = document.getElementById('meet-screen'), 
+                  joinBtn = document.getElementById('join-btn'), 
+                  hangUpBtn = document.getElementById('hang-up-btn'), 
+                  sendAnswerBtn = document.getElementById('send-answer-btn'), 
+                  toggleChatBtn = document.getElementById('toggle-chat-btn'), 
+                  closeChatBtn = document.getElementById('close-chat-btn'), 
+                  interviewerMessage = document.getElementById('interviewer-message'), 
+                  chatHistory = document.getElementById('chat-history'), 
+                  currentTimeEl = document.getElementById('current-time'), 
+                  closeSummaryBtn = document.getElementById('close-summary-btn'), 
+                  userIdInput = document.getElementById("user-id"),
+                  topicSelect = document.getElementById("topic-select"),
+                  answerInput = document.getElementById("answer-input"),
+                  summaryModal = document.getElementById("summary-modal"),
+                  summaryDetails = document.getElementById("summary-details"),
+                  apiKeyInput = document.getElementById("apiKey"),
+                  voiceSelect = document.getElementById("voiceSelect"),
+                  audioPlayer = document.getElementById("audioPlayer"),
+                  newTopicInput = document.getElementById("new-topic-input"),
+                  createTopicBtn = document.getElementById("create-topic-btn"),
+                  questionTopicSelect = document.getElementById("question-topic-select"),
+                  newQuestionInput = document.getElementById("new-question-input"),
+                  createQuestionBtn = document.getElementById("create-question-btn"), 
+                  voiceReplyBtn = document.getElementById('voice-reply-btn');
+            
             // New Elements for Settings Panel
-            const toggleSettingsBtn = document.getElementById('toggle-settings-btn'), settingsPanel = document.getElementById('settings-panel'), closeSettingsBtn = document.getElementById('close-settings-btn'), apiKeyInCallInput = document.getElementById('apiKey-in-call'), voiceSelectInCall = document.getElementById('voiceSelect-in-call');
+            const toggleSettingsBtn = document.getElementById('toggle-settings-btn'), 
+                  settingsPanel = document.getElementById('settings-panel'), 
+                  closeSettingsBtn = document.getElementById('close-settings-btn'), 
+                  apiKeyInCallInput = document.getElementById('apiKey-in-call'), 
+                  voiceSelectInCall = document.getElementById('voiceSelect-in-call');
+            
+            // DRAGGABLE ELEMENTS
+            const userView = document.getElementById('user-view');
+            const dragHandle = document.getElementById('drag-handle');
+            const silenceIndicator = document.getElementById('silence-indicator');
             
             let currentUserId = '', currentSessionId = '', topics = [];
             const API_BASE_URL = 'https://f8abf4cdc39f.ngrok-free.app/v1';
             
+            // --- DRAGGABLE FUNCTIONALITY ---
+            let isDragging = false;
+            let startX = 0, startY = 0;
+            let currentTransformX = 0, currentTransformY = 0;
+            
+            function makeDraggable() {
+                dragHandle.addEventListener('mousedown', startDrag);
+                dragHandle.addEventListener('touchstart', startDrag, { passive: false });
+                
+                document.addEventListener('mousemove', doDrag);
+                document.addEventListener('touchmove', doDrag, { passive: false });
+                
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+                
+                // Prevent drag when clicking on textarea
+                answerInput.addEventListener('mousedown', (e) => {
+                    if (isDragging) {
+                        e.stopPropagation();
+                        stopDrag();
+                    }
+                });
+                
+                answerInput.addEventListener('touchstart', (e) => {
+                    if (isDragging) {
+                        e.stopPropagation();
+                        stopDrag();
+                    }
+                });
+            }
+            
+            function startDrag(e) {
+                if (e.target !== dragHandle) return;
+                
+                e.preventDefault();
+                isDragging = true;
+                
+                startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+                startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+                
+                // Get current transform position
+                const transform = userView.style.transform;
+                if (transform) {
+                    const match = transform.match(/translate\((-?\d+(\.\d+)?)px,\s*(-?\d+(\.\d+)?)px\)/);
+                    if (match) {
+                        currentTransformX = parseFloat(match[1]);
+                        currentTransformY = parseFloat(match[3]);
+                    }
+                }
+                
+                userView.classList.add('dragging');
+                document.body.style.userSelect = 'none';
+                document.body.style.webkitUserSelect = 'none';
+            }
+            
+            function doDrag(e) {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                
+                const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+                const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
+                
+                const deltaX = clientX - startX;
+                const deltaY = clientY - startY;
+                
+                const newX = currentTransformX + deltaX;
+                const newY = currentTransformY + deltaY;
+                
+                // Constrain to viewport
+                const maxX = window.innerWidth - userView.offsetWidth - 20;
+                const maxY = window.innerHeight - userView.offsetHeight - 100;
+                
+                const constrainedX = Math.max(0, Math.min(maxX, newX));
+                const constrainedY = Math.max(0, Math.min(maxY, newY));
+                
+                // Remove any existing positioning styles and use transform only
+                userView.style.bottom = 'auto';
+                userView.style.right = 'auto';
+                userView.style.left = '0';
+                userView.style.top = '0';
+                userView.style.transform = `translate(${constrainedX}px, ${constrainedY}px)`;
+            }
+            
+            function stopDrag() {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                userView.classList.remove('dragging');
+                document.body.style.userSelect = '';
+                document.body.style.webkitUserSelect = '';
+            }
+            
+            // --- VOICE RECOGNITION WITH SILENCE DETECTION ---
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            let isRecognizing = false;
+            let silenceTimer = null;
+            let lastSpeechActivity = 0;
+            let voiceBuffer = '';
+            let isProcessingSpeech = false;
+            const SILENCE_THRESHOLD = 4000; // 4 seconds
+            
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = () => { 
+                    console.log('Voice recognition started');
+                    isRecognizing = true; 
+                    isProcessingSpeech = true;
+                    voiceBuffer = '';
+                    lastSpeechActivity = Date.now();
+                    voiceReplyBtn.classList.add('is-recording'); 
+                    voiceReplyBtn.title = 'Stop Recording';
+                    silenceIndicator.classList.add('speaking');
+                    silenceIndicator.classList.remove('silent');
+                    startSilenceDetection();
+                };
+                
+                recognition.onend = () => { 
+                    console.log('Voice recognition ended');
+                    isRecognizing = false; 
+                    isProcessingSpeech = false;
+                    voiceReplyBtn.classList.remove('is-recording'); 
+                    voiceReplyBtn.title = 'Reply with Voice';
+                    silenceIndicator.classList.remove('speaking');
+                    silenceIndicator.classList.remove('silent');
+                    stopSilenceDetection();
+                };
+                
+                recognition.onerror = (event) => { 
+                    console.error('Speech recognition error:', event.error); 
+                    if (event.error === 'not-allowed') { 
+                        alert('Microphone access was denied. Please allow it in your browser settings to use this feature.'); 
+                    }
+                    isRecognizing = false;
+                    isProcessingSpeech = false;
+                    silenceIndicator.classList.remove('speaking');
+                    silenceIndicator.classList.remove('silent');
+                    stopSilenceDetection();
+                };
+
+                recognition.onresult = (event) => {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+                    
+                    // Process all results from this event
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        const transcript = event.results[i][0].transcript;
+                        
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    // Update last activity time
+                    if (finalTranscript || interimTranscript) {
+                        lastSpeechActivity = Date.now();
+                        silenceIndicator.classList.add('speaking');
+                        silenceIndicator.classList.remove('silent');
+                    }
+                    
+                    // Handle final results (commit to buffer)
+                    if (finalTranscript) {
+                        voiceBuffer += finalTranscript;
+                        
+                        // Check for voice commands in final results only
+                        const commandFound = handleVoiceCommand(finalTranscript.toLowerCase().trim());
+                        if (commandFound) {
+                            // Remove command from buffer
+                            voiceBuffer = voiceBuffer.replace(finalTranscript, '').trim();
+                        }
+                        
+                        // Update the input field with the current buffer
+                        updateAnswerInput();
+                    }
+                    
+                    // Show interim results as they're coming in
+                    if (interimTranscript) {
+                        // For interim, just show preview in console for now
+                        console.log('Interim:', interimTranscript);
+                    }
+                };
+                
+                function updateAnswerInput() {
+                    const newText = voiceBuffer.trim();
+                    
+                    if (newText) {
+                        // Simply replace with the current voice buffer to avoid duplicates
+                        answerInput.value = newText;
+                        answerInput.scrollTop = answerInput.scrollHeight;
+                    }
+                }
+                
+                function startSilenceDetection() {
+                    // Clear any existing timer
+                    if (silenceTimer) {
+                        clearTimeout(silenceTimer);
+                    }
+                    
+                    // Start monitoring for silence
+                    const checkSilence = () => {
+                        const silenceDuration = Date.now() - lastSpeechActivity;
+                        
+                        if (silenceDuration > SILENCE_THRESHOLD && isProcessingSpeech && voiceBuffer.trim()) {
+                            console.log('Silence detected after', silenceDuration, 'ms - sending response');
+                            silenceIndicator.classList.add('silent');
+                            // Stop recognition first, then send answer
+                            if (isRecognizing) {
+                                recognition.stop();
+                            }
+                            // Use setTimeout to ensure recognition stops before sending
+                            setTimeout(() => {
+                                handleSendAnswer();
+                            }, 100);
+                            return;
+                        }
+                        
+                        // Continue monitoring if still recognizing
+                        if (isRecognizing) {
+                            silenceTimer = setTimeout(checkSilence, 500);
+                        }
+                    };
+                    
+                    silenceTimer = setTimeout(checkSilence, 500);
+                }
+                
+                function stopSilenceDetection() {
+                    if (silenceTimer) {
+                        clearTimeout(silenceTimer);
+                        silenceTimer = null;
+                    }
+                    isProcessingSpeech = false;
+                }
+                
+                voiceReplyBtn.addEventListener('click', () => {
+                    if (isRecognizing) { 
+                        console.log('Stopping voice recognition');
+                        recognition.stop();
+                    } else {
+                        console.log('Starting voice recognition');
+                        // Reset state
+                        stopSilenceDetection();
+                        voiceBuffer = '';
+                        lastSpeechActivity = Date.now();
+                        answerInput.value = answerInput.value.replace(/<voice>.*?<\/voice>/, '').trim();
+                        
+                        // Start recognition
+                        try {
+                            recognition.start();
+                        } catch (error) {
+                            console.error('Failed to start recognition:', error);
+                        }
+                    }
+                });
+            } else {
+                console.warn("Speech Recognition not supported in this browser.");
+                voiceReplyBtn.style.display = 'none';
+            }
+
+            // --- Voice Command Handler ---
+            function handleVoiceCommand(transcript) {
+                const commands = {
+                    "send answer": () => { 
+                        console.log("Voice command: Send Answer"); 
+                        handleSendAnswer(); 
+                        return true; 
+                    },
+                    "submit answer": () => { 
+                        console.log("Voice command: Submit Answer"); 
+                        handleSendAnswer(); 
+                        return true; 
+                    },
+                    "stop listening": () => { 
+                        console.log("Voice command: Stop Listening"); 
+                        if (isRecognizing) recognition.stop(); 
+                        return true; 
+                    },
+                    "open chat": () => { 
+                        console.log("Voice command: Open Chat"); 
+                        meetScreen.classList.remove('settings-open'); 
+                        meetScreen.classList.add('chat-open'); 
+                        return true; 
+                    },
+                    "close chat": () => { 
+                        console.log("Voice command: Close Chat"); 
+                        meetScreen.classList.remove('chat-open'); 
+                        return true; 
+                    },
+                    "open settings": () => { 
+                        console.log("Voice command: Open Settings"); 
+                        meetScreen.classList.remove('chat-open'); 
+                        meetScreen.classList.add('settings-open'); 
+                        return true; 
+                    },
+                    "close settings": () => { 
+                        console.log("Voice command: Close Settings"); 
+                        meetScreen.classList.remove('settings-open'); 
+                        return true; 
+                    },
+                    "end interview": () => { 
+                        console.log("Voice command: End Interview"); 
+                        handleEndInterview(); 
+                        return true; 
+                    },
+                    "hang up": () => { 
+                        console.log("Voice command: Hang Up"); 
+                        handleEndInterview(); 
+                        return true; 
+                    }
+                };
+                
+                for (const phrase in commands) { 
+                    if (transcript.toLowerCase().includes(phrase)) { 
+                        commands[phrase]();
+                        return true;
+                    } 
+                }
+                return false; 
+            }
+
+            const updateTime = () => { 
+                currentTimeEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); 
+            };
+            setInterval(updateTime, 60000); 
+            updateTime();
+            
             // Test API connection on page load
+            testApiConnection();
+            
+            // Event Listeners
+            joinBtn.addEventListener('click', handleStartInterview);
+            hangUpBtn.addEventListener('click', handleEndInterview);
+            closeSummaryBtn.addEventListener('click', () => { 
+                summaryModal.classList.add('hidden'); 
+                meetScreen.classList.add('hidden'); 
+                lobbyScreen.classList.remove('hidden'); 
+            });
+            sendAnswerBtn.addEventListener('click', handleSendAnswer);
+            answerInput.addEventListener('keydown', (e) => { 
+                if (e.key === 'Enter' && !e.shiftKey) { 
+                    e.preventDefault(); 
+                    handleSendAnswer(); 
+                } 
+            });
+            
+            toggleChatBtn.addEventListener('click', () => { 
+                meetScreen.classList.remove('settings-open'); 
+                meetScreen.classList.toggle('chat-open'); 
+            });
+            closeChatBtn.addEventListener('click', () => { 
+                meetScreen.classList.remove('chat-open'); 
+            }); 
+            
+            toggleSettingsBtn.addEventListener('click', () => { 
+                meetScreen.classList.remove('chat-open'); 
+                meetScreen.classList.toggle('settings-open'); 
+            });
+            closeSettingsBtn.addEventListener('click', () => { 
+                meetScreen.classList.remove('settings-open'); 
+            }); 
+
+            // Sync settings between lobby and in-call panel
+            apiKeyInput.addEventListener('input', () => apiKeyInCallInput.value = apiKeyInput.value);
+            voiceSelect.addEventListener('change', () => voiceSelectInCall.value = voiceSelect.value);
+            apiKeyInCallInput.addEventListener('input', () => apiKeyInput.value = apiKeyInCallInput.value);
+            voiceSelectInCall.addEventListener('change', () => voiceSelect.value = voiceSelectInCall.value);
+
+            // Tab functionality
+            const tabButtons = document.querySelectorAll(".tab-button"), tabPanes = document.querySelectorAll(".tab-pane");
+            tabButtons.forEach(button => {
+                button.addEventListener("click", () => {
+                    tabButtons.forEach(btn => btn.classList.remove("active"));
+                    button.classList.add("active");
+                    const targetPaneId = button.dataset.tab;
+                    tabPanes.forEach(pane => {
+                        pane.classList.toggle("hidden", pane.id !== targetPaneId)
+                    });
+                });
+            });
+            
+            // Initialize draggable functionality
+            makeDraggable();
+            
+            async function speakText(text) {
+                const apiKey = apiKeyInCallInput.value.trim();
+                if (!apiKey || !text) return;
+                const requestBody = { 
+                    input: { text }, 
+                    voice: { 
+                        languageCode: voiceSelectInCall.value.substring(0, 5), 
+                        name: voiceSelectInCall.value 
+                    }, 
+                    audioConfig: { audioEncoding: 'MP3' } 
+                };
+                const apiUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+                try {
+                    const response = await fetch(apiUrl, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(requestBody) 
+                    });
+                    if (!response.ok) throw new Error('TTS API error');
+                    const data = await response.json();
+                    if (data.audioContent) { 
+                        audioPlayer.src = `data:audio/mp3;base64,${data.audioContent}`; 
+                        audioPlayer.play(); 
+                    }
+                } catch (error) { 
+                    console.error('TTS Failed:', error); 
+                }
+            }
+
+            async function apiCall(endpoint, method = 'GET', body = null, extraHeaders = {}) {
+                const headers = { 
+                    'Content-Type': 'application/json', 
+                    'X-User-ID': currentUserId, 
+                    'ngrok-skip-browser-warning': 'true',
+                    ...extraHeaders 
+                };
+                const config = { method, headers };
+                if (body) config.body = JSON.stringify(body);
+                try {
+                    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+                    if (response.status === 204) return null;
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ message: 'API error' }));
+                        throw new Error(errorData.message || `HTTP ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (error) { 
+                    console.error('API Call Failed:', error); 
+                    if (error.message.includes('Failed to fetch')) {
+                        throw new Error('Network error - check if backend is running and accessible');
+                    }
+                    throw error; 
+                }
+            }
+            
+            function addMessageToChatHistory(sender, text) { 
+                const senderEl = document.createElement('div'); 
+                senderEl.className = 'sender'; 
+                senderEl.textContent = sender; 
+                const textEl = document.createElement('div'); 
+                textEl.textContent = text; 
+                const messageContainer = document.createElement('div'); 
+                messageContainer.className = 'chat-message'; 
+                messageContainer.append(senderEl, textEl); 
+                chatHistory.appendChild(messageContainer); 
+                chatHistory.scrollTop = chatHistory.scrollHeight; 
+            }
+            
+            function resetUI() { 
+                chatHistory.innerHTML = ''; 
+                answerInput.value = ''; 
+                voiceBuffer = '';
+                currentSessionId = ''; 
+                interviewerMessage.textContent = 'Waiting to start...'; 
+                meetScreen.classList.remove('chat-open'); 
+                meetScreen.classList.remove('settings-open'); 
+                
+                // Reset user view position
+                userView.style.transform = '';
+                userView.style.bottom = '110px';
+                userView.style.right = '20px';
+                userView.style.left = 'auto';
+                userView.style.top = 'auto';
+                currentTransformX = 0;
+                currentTransformY = 0;
+            }
+
             async function testApiConnection() {
                 try {
                     console.log('Testing API connection...');
@@ -483,7 +1210,6 @@
                     });
                     if (response.ok) {
                         console.log('API connection successful');
-                        // Update topic select to show success
                         if (topicSelect.innerHTML.includes('Loading topics')) {
                             topicSelect.innerHTML = '<option value="">Select a topic...</option>';
                         }
@@ -523,142 +1249,12 @@
             }
             populateVoiceSelectors();
 
-
-            // --- Voice Command Handler ---
-            function handleVoiceCommand(transcript) {
-                const commands = {
-                    "send answer": () => { console.log("Voice command: Send Answer"); answerInput.value = answerInput.value.replace(/send answer/ig, '').trim(); handleSendAnswer(); return true; },
-                    "submit answer": () => { console.log("Voice command: Submit Answer"); answerInput.value = answerInput.value.replace(/submit answer/ig, '').trim(); handleSendAnswer(); return true; },
-                    "stop listening": () => { console.log("Voice command: Stop Listening"); if (isRecognizing) recognition.stop(); return true; },
-                    "open chat": () => { console.log("Voice command: Open Chat"); meetScreen.classList.remove('settings-open'); meetScreen.classList.add('chat-open'); return true; },
-                    "close chat": () => { console.log("Voice command: Close Chat"); meetScreen.classList.remove('chat-open'); return true; },
-                    "open settings": () => { console.log("Voice command: Open Settings"); meetScreen.classList.remove('chat-open'); meetScreen.classList.add('settings-open'); return true; },
-                    "close settings": () => { console.log("Voice command: Close Settings"); meetScreen.classList.remove('settings-open'); return true; },
-                    "end interview": () => { console.log("Voice command: End Interview"); handleEndInterview(); return true; },
-                    "hang up": () => { console.log("Voice command: Hang Up"); handleEndInterview(); return true; }
-                };
-                for (const phrase in commands) { if (transcript.includes(phrase)) { return commands[phrase](); } }
-                return false; 
-            }
-
-            // --- SPEECH TO TEXT IMPLEMENTATION ---
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            let recognition;
-            let isRecognizing = false;
-
-            if (SpeechRecognition) {
-                recognition = new SpeechRecognition();
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.lang = 'en-US';
-                recognition.onstart = () => { isRecognizing = true; voiceReplyBtn.classList.add('is-recording'); voiceReplyBtn.title = 'Stop Recording'; };
-                recognition.onend = () => { isRecognizing = false; voiceReplyBtn.classList.remove('is-recording'); voiceReplyBtn.title = 'Reply with Voice'; };
-                recognition.onerror = (event) => { console.error('Speech recognition error:', event.error); if (event.error === 'not-allowed') { alert('Microphone access was denied. Please allow it in your browser settings to use this feature.'); } };
-
-                let textBeforeRecognition = '';
-                let fullTranscriptFromSpeech = '';
-                recognition.onresult = (event) => {
-                    let interim_transcript = '';
-                    let final_transcript_for_this_event = '';
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        const transcript = event.results[i][0].transcript;
-                        if (event.results[i].isFinal) { final_transcript_for_this_event += transcript; } else { interim_transcript += transcript; }
-                    }
-                    fullTranscriptFromSpeech += final_transcript_for_this_event;
-                    answerInput.value = textBeforeRecognition + fullTranscriptFromSpeech + interim_transcript;
-                    if (final_transcript_for_this_event) {
-                        const commandFound = handleVoiceCommand(final_transcript_for_this_event.toLowerCase().trim());
-                        if (commandFound) { fullTranscriptFromSpeech = answerInput.value.substring(textBeforeRecognition.length); }
-                    }
-                };
-                voiceReplyBtn.addEventListener('click', () => {
-                    if (isRecognizing) { recognition.stop();
-                    } else {
-                        textBeforeRecognition = answerInput.value; 
-                        if(textBeforeRecognition.length > 0 && !textBeforeRecognition.endsWith(' ')) { textBeforeRecognition += ' '; }
-                        fullTranscriptFromSpeech = '';
-                        recognition.start();
-                    }
-                });
-            } else {
-                console.warn("Speech Recognition not supported in this browser.");
-                voiceReplyBtn.classList.add('hidden');
-            }
-
-
-            const updateTime = () => { currentTimeEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
-            setInterval(updateTime, 60000); updateTime();
-            
-            // Test API connection on page load
-            testApiConnection();
-            
-            joinBtn.addEventListener('click', handleStartInterview);
-            hangUpBtn.addEventListener('click', handleEndInterview);
-            closeSummaryBtn.addEventListener('click', () => { summaryModal.classList.add('hidden'); meetScreen.classList.add('hidden'); lobbyScreen.classList.remove('hidden'); });
-            sendAnswerBtn.addEventListener('click', handleSendAnswer);
-            answerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendAnswer(); } });
-            
-            toggleChatBtn.addEventListener('click', () => { meetScreen.classList.remove('settings-open'); meetScreen.classList.toggle('chat-open'); });
-            closeChatBtn.addEventListener('click', () => { meetScreen.classList.remove('chat-open'); }); 
-            toggleSettingsBtn.addEventListener('click', () => { meetScreen.classList.remove('chat-open'); meetScreen.classList.toggle('settings-open'); });
-            closeSettingsBtn.addEventListener('click', () => { meetScreen.classList.remove('settings-open'); }); 
-
-            // Sync settings between lobby and in-call panel
-            apiKeyInput.addEventListener('input', () => apiKeyInCallInput.value = apiKeyInput.value);
-            voiceSelect.addEventListener('change', () => voiceSelectInCall.value = voiceSelect.value);
-            apiKeyInCallInput.addEventListener('input', () => apiKeyInput.value = apiKeyInCallInput.value);
-            voiceSelectInCall.addEventListener('change', () => voiceSelect.value = voiceSelectInCall.value);
-
-
-            const tabButtons=document.querySelectorAll(".tab-button"),tabPanes=document.querySelectorAll(".tab-pane");
-            tabButtons.forEach(button=>{button.addEventListener("click",()=>{tabButtons.forEach(btn=>btn.classList.remove("active"));button.classList.add("active");const targetPaneId=button.dataset.tab;tabPanes.forEach(pane=>{pane.classList.toggle("hidden",pane.id!==targetPaneId)})})});
-            
-            async function speakText(text) {
-                const apiKey = apiKeyInCallInput.value.trim(); // Use in-call value
-                if (!apiKey || !text) return;
-                const requestBody = { input: { text }, voice: { languageCode: voiceSelectInCall.value.substring(0, 5), name: voiceSelectInCall.value }, audioConfig: { audioEncoding: 'MP3' } };
-                const apiUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-                try {
-                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
-                    if (!response.ok) throw new Error('TTS API error');
-                    const data = await response.json();
-                    if (data.audioContent) { audioPlayer.src = `data:audio/mp3;base64,${data.audioContent}`; audioPlayer.play(); }
-                } catch (error) { console.error('TTS Failed:', error); }
-            }
-
-            async function apiCall(endpoint, method = 'GET', body = null, extraHeaders = {}) {
-                const headers = { 
-                    'Content-Type': 'application/json', 
-                    'X-User-ID': currentUserId, 
-                    'ngrok-skip-browser-warning': 'true',  // Skip ngrok browser warning
-                    ...extraHeaders 
-                };
-                const config = { method, headers };
-                if (body) config.body = JSON.stringify(body);
-                try {
-                    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-                    if (response.status === 204) return null;
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ message: 'API error' }));
-                        throw new Error(errorData.message || `HTTP ${response.status}`);
-                    }
-                    return await response.json();
-                } catch (error) { 
-                    console.error('API Call Failed:', error); 
-                    // If it's a network error, provide more helpful message
-                    if (error.message.includes('Failed to fetch')) {
-                        throw new Error('Network error - check if backend is running and accessible');
-                    }
-                    throw error; 
-                }
-            }
-            
-            function addMessageToChatHistory(sender, text) { const senderEl = document.createElement('div'); senderEl.className = 'sender'; senderEl.textContent = sender; const textEl = document.createElement('div'); textEl.textContent = text; const messageContainer = document.createElement('div'); messageContainer.className = 'chat-message'; messageContainer.append(senderEl, textEl); chatHistory.appendChild(messageContainer); chatHistory.scrollTop = chatHistory.scrollHeight; }
-            function resetUI() { chatHistory.innerHTML = ''; answerInput.value = ''; currentSessionId = ''; interviewerMessage.textContent = 'Waiting to start...'; meetScreen.classList.remove('chat-open'); meetScreen.classList.remove('settings-open'); }
-
             async function fetchAndPopulateTopics() {
                 currentUserId = userIdInput.value.trim();
-                if (!currentUserId) { topicSelect.innerHTML = '<option value="">Set User ID first</option>'; return; }
+                if (!currentUserId) { 
+                    topicSelect.innerHTML = '<option value="">Set User ID first</option>'; 
+                    return; 
+                }
                 try {
                     topics = await apiCall('/topics');
                     if (topics && topics.length > 0) { 
@@ -670,12 +1266,17 @@
                         topicSelect.innerHTML = msg;
                         questionTopicSelect.innerHTML = msg;
                     }
-                } catch (e) { topicSelect.innerHTML = '<option>Error loading topics</option>'; }
+                } catch (e) { 
+                    topicSelect.innerHTML = '<option>Error loading topics</option>'; 
+                }
             }
 
             async function handleStartInterview() {
                 currentUserId = userIdInput.value.trim();
-                if (!currentUserId || !topicSelect.value) { alert('Please set a User ID and select a topic.'); return; }
+                if (!currentUserId || !topicSelect.value) { 
+                    alert('Please set a User ID and select a topic.'); 
+                    return; 
+                }
                 
                 // Sync settings to in-call panel before starting
                 apiKeyInCallInput.value = apiKeyInput.value;
@@ -684,33 +1285,59 @@
                 lobbyScreen.classList.add('hidden');
                 meetScreen.classList.remove('hidden');
                 resetUI();
+                
                 try {
                     const sessionData = await apiCall('/interview/start', 'POST', null, { 'X-Topic-ID': topicSelect.value });
                     currentSessionId = sessionData.session_id;
                     interviewerMessage.textContent = sessionData.initial_question;
                     addMessageToChatHistory('AI Interviewer', sessionData.initial_question);
                     speakText(sessionData.initial_question);
-                } catch (error) { interviewerMessage.textContent = `Error: ${error.message}`; }
+                } catch (error) { 
+                    interviewerMessage.textContent = `Error: ${error.message}`; 
+                }
             }
             
             async function handleEndInterview() {
-                if(isRecognizing) recognition.stop();
-                if (!currentSessionId) { meetScreen.classList.add('hidden'); lobbyScreen.classList.remove('hidden'); return; }
+                if(isRecognizing) {
+                    recognition.stop();
+                }
+                if (!currentSessionId) { 
+                    meetScreen.classList.add('hidden'); 
+                    lobbyScreen.classList.remove('hidden'); 
+                    return; 
+                }
                 try {
                     const data = await apiCall(`/interview/end/${currentSessionId}`, 'POST');
                     displaySummary(data.summary);
                     summaryModal.classList.remove('hidden');
-                } catch (error) { alert(`Error ending session: ${error.message}`); }
+                } catch (error) { 
+                    alert(`Error ending session: ${error.message}`); 
+                }
             }
             
             async function handleSendAnswer() {
-                if (isRecognizing) recognition.stop();
-                const text = answerInput.value.trim();
-                if (!text || !currentSessionId) return;
+                console.log('handleSendAnswer called');
+                if (isRecognizing) {
+                    recognition.stop();
+                }
+                
+                const text = (voiceBuffer || answerInput.value).trim();
+                console.log('Sending text:', text);
+                
+                if (!text || !currentSessionId) {
+                    console.log('No text or no session, aborting');
+                    return;
+                }
+                
+                // Clear everything
                 answerInput.value = '';
+                voiceBuffer = '';
+                
                 addMessageToChatHistory('You', text);
+                
                 try {
                     const data = await apiCall(`/interview/${currentSessionId}`, 'POST', { text });
+                    console.log('API response:', data);
                     if(data && data.response) {
                         interviewerMessage.textContent = data.response;
                         addMessageToChatHistory('AI Interviewer', data.response);
@@ -723,36 +1350,52 @@
                             }, 2000);
                         }
                     }
-                } catch (error) { interviewerMessage.textContent = `Error: ${error.message}`; }
+                } catch (error) { 
+                    console.error('Send answer error:', error);
+                    interviewerMessage.textContent = `Error: ${error.message}`; 
+                }
             }
             
             async function handleCreateTopic() {
                 currentUserId = userIdInput.value.trim();
                 const topicName = newTopicInput.value.trim();
-                if (!currentUserId || !topicName) { alert('Set User ID and enter a topic name.'); return; }
+                if (!currentUserId || !topicName) { 
+                    alert('Set User ID and enter a topic name.'); 
+                    return; 
+                }
                 try { 
                     await apiCall('/topics', 'POST', { topic: topicName }); 
                     newTopicInput.value = ''; 
                     alert('Topic created!'); 
                     fetchAndPopulateTopics(); 
                 }
-                catch (e) { alert(`Error: ${e.message}`); }
+                catch (e) { 
+                    alert(`Error: ${e.message}`); 
+                }
             }
             
             async function handleCreateQuestion() {
                  currentUserId = userIdInput.value.trim();
                  const topicId = questionTopicSelect.value;
                  const questionText = newQuestionInput.value.trim();
-                 if (!currentUserId || !topicId || !questionText) { alert('Please select a topic and enter question text.'); return; }
+                 if (!currentUserId || !topicId || !questionText) { 
+                     alert('Please select a topic and enter question text.'); 
+                     return; 
+                 }
                  try {
                      await apiCall('/questions', 'POST', { topic_id: topicId, question: questionText });
                      newQuestionInput.value = '';
                      alert('Question created successfully!');
-                 } catch(e) { alert(`Error creating question: ${e.message}`); }
+                 } catch(e) { 
+                     alert(`Error creating question: ${e.message}`); 
+                 }
             }
 
             function displaySummary(summary) {
-                if (!summary) { summaryDetails.innerHTML = "<p>Could not retrieve summary.</p>"; return; }
+                if (!summary) { 
+                    summaryDetails.innerHTML = "<p>Could not retrieve summary.</p>"; 
+                    return; 
+                }
                 const listify = (items) => items && items.length > 0 ? `<ul style="list-style-position: inside; padding-left: 10px;">${items.map(item => `<li>${item}</li>`).join('')}</ul>` : '<p>None noted.</p>';
                 summaryDetails.innerHTML = `
                     <h4 style="margin-top:0;">Interview Scores</h4>
@@ -780,6 +1423,7 @@
                 `;
             }
             
+            // Event listeners for management
             userIdInput.addEventListener('change', fetchAndPopulateTopics);
             createTopicBtn.addEventListener('click', handleCreateTopic);
             createQuestionBtn.addEventListener('click', handleCreateQuestion);
