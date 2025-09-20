@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Interview Engine Client</title>
     <!-- Google Fonts & Material Icons -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
@@ -29,6 +29,11 @@
         html {
             scroll-behavior: smooth;
             touch-action: manipulation;
+            /* Prevent horizontal scrolling */
+            overflow-x: hidden;
+            /* Better mobile viewport handling */
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
 
         body {
@@ -40,6 +45,11 @@
             display: flex;
             justify-content: center;
             position: relative;
+            /* Prevent zoom on double tap */
+            touch-action: manipulation;
+            /* Improve text rendering on mobile */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .hidden { display: none !important; }
@@ -180,7 +190,7 @@
             flex-direction: column;
             z-index: 5;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            transition: box-shadow 0.2s ease;
             /* Initial position */
             bottom: 110px;
             right: 20px;
@@ -474,43 +484,180 @@
         }
 
         /* --- RESPONSIVE STYLES --- */
+        
+        /* Large tablets and small desktops */
+        @media screen and (max-width: 1024px) {
+            #lobby-screen {
+                max-width: 600px;
+                padding: 30px 20px;
+            }
+            
+            .lobby-preview {
+                min-height: 350px;
+            }
+            
+            #interviewer-view {
+                max-width: 800px;
+                max-height: 600px;
+            }
+        }
+        
+        /* Tablets */
         @media screen and (max-width: 900px) {
             #lobby-screen {
                 flex-direction: column;
                 max-width: 500px;
                 padding: 20px;
+                gap: 20px;
+            }
+            
+            .lobby-preview {
+                min-height: 300px;
+            }
+            
+            .lobby-avatar {
+                width: 120px;
+                height: 120px;
+                font-size: 70px;
+            }
+            
+            #interviewer-view {
+                max-width: 700px;
+                max-height: 500px;
+            }
+            
+            #interviewer-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 50px;
             }
         }
 
+        /* Mobile devices */
         @media screen and (max-width: 768px) {
-            .main-content { 
-                padding: 10px; 
-                padding-bottom: 90px; 
+            body {
+                font-size: 14px;
             }
             
-            #user-view { 
-                width: 280px; 
-                height: 200px; 
-                max-width: 90vw;
-                max-height: 40vh;
+            /* Lobby optimizations */
+            #lobby-screen {
+                padding: 15px;
+                gap: 15px;
+                max-width: 100%;
+            }
+            
+            .lobby-preview {
+                min-height: 250px;
+                padding: 15px;
+            }
+            
+            .lobby-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 60px;
+            }
+            
+            .lobby-setup h1 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+            
+            .management-tabs {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            .tab-button {
+                padding: 8px 12px;
+                font-size: 0.9rem;
+                flex: 1;
+                min-width: 120px;
+            }
+            
+            input, select, textarea {
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 8px;
+            }
+            
+            #join-btn {
+                padding: 14px 24px;
+                font-size: 1.1rem;
+                margin-top: 15px;
+            }
+            
+            /* Meet screen optimizations */
+            .main-content { 
+                padding: 8px; 
+                padding-bottom: 85px; 
+            }
+            
+            #interviewer-view {
+                max-width: 100%;
+                max-height: 60vh;
+                margin: 0;
+            }
+            
+            #interviewer-avatar {
+                width: 70px;
+                height: 70px;
+                font-size: 40px;
+                margin-bottom: 15px;
             }
             
             #interviewer-message { 
-                font-size: 1rem; 
-                bottom: 10px; 
-                left: 10px; 
-                right: 10px; 
+                font-size: 0.95rem; 
+                bottom: 8px; 
+                left: 8px; 
+                right: 8px;
+                padding: 10px;
+                min-height: 40px;
             }
             
+            /* User view (draggable textbox) */
+            #user-view { 
+                width: calc(100vw - 20px);
+                height: 180px;
+                max-width: 350px;
+                right: 10px;
+                bottom: 75px;
+                border-radius: 12px;
+            }
+            
+            #user-view-label {
+                padding: 6px 8px;
+                font-size: 0.85rem;
+            }
+            
+            #answer-input {
+                font-size: 0.95rem;
+                padding: 8px;
+            }
+            
+            #voice-command-hint {
+                font-size: 0.7rem;
+                padding: 0 8px 3px 8px;
+            }
+            
+            .drag-handle {
+                padding: 6px;
+            }
+            
+            .drag-handle span {
+                font-size: 14px;
+            }
+            
+            /* Control bar optimizations */
             #control-bar { 
-                height: 70px; 
-                padding: 0 10px; 
+                height: 65px; 
+                padding: 0 8px; 
                 flex-wrap: nowrap; 
             }
             
             #control-bar .control-group:first-child, 
             #control-bar .control-group:last-child { 
                 flex-shrink: 0; 
+                min-width: 80px;
             }
             
             #control-bar .control-group:nth-child(2) { 
@@ -518,32 +665,175 @@
                 flex-grow: 1; 
             }
             
-            .control-group { gap: 6px; }
+            .control-group { 
+                gap: 6px; 
+            }
+            
             .control-button { 
-                width: 44px; 
-                height: 38px; 
+                width: 46px; 
+                height: 40px;
+                border-radius: 20px;
             }
-            .control-button.hang-up { width: 52px; }
             
-            .side-panel { width: 100%; }
+            .control-button.hang-up { 
+                width: 54px; 
+            }
+            
+            #current-time {
+                font-size: 0.85rem;
+            }
+            
+            /* Side panels */
+            .side-panel { 
+                width: 100%; 
+                transform: translateX(100%);
+            }
+            
+            .side-panel-header {
+                padding: 12px 16px;
+            }
+            
+            .side-panel-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            #chat-history, #settings-content {
+                padding: 12px;
+            }
+            
+            .chat-message {
+                margin-bottom: 10px;
+            }
+            
+            /* Summary modal */
             #summary-content { 
-                max-width: 90vw; 
-                padding: 20px; 
+                max-width: 95vw; 
+                padding: 20px 15px;
+                margin: 10px;
+                max-height: 85vh;
             }
             
-            .drag-handle span {
-                font-size: 14px;
+            #summary-content h2 {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+            
+            #summary-content h4 {
+                font-size: 1.1rem;
+                margin: 15px 0 8px 0;
             }
         }
 
+        /* Small mobile devices */
         @media screen and (max-width: 480px) {
+            /* Lobby further optimizations */
+            #lobby-screen {
+                padding: 10px;
+            }
+            
+            .lobby-preview {
+                min-height: 200px;
+                padding: 10px;
+            }
+            
+            .lobby-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 50px;
+            }
+            
+            .lobby-setup h1 {
+                font-size: 1.3rem;
+            }
+            
+            .tab-button {
+                padding: 6px 8px;
+                font-size: 0.8rem;
+                min-width: 100px;
+            }
+            
+            /* Meet screen */
+            .main-content {
+                padding: 5px;
+                padding-bottom: 75px;
+            }
+            
+            #interviewer-view {
+                max-height: 55vh;
+            }
+            
+            #interviewer-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 35px;
+            }
+            
             #user-view { 
-                width: 260px; 
-                height: 180px; 
+                width: calc(100vw - 16px);
+                height: 160px;
+                max-width: 320px;
+                right: 8px;
+                bottom: 65px;
+            }
+            
+            #control-bar {
+                height: 60px;
+                padding: 0 5px;
             }
             
             #control-bar .control-group:nth-child(2) {
-                gap: 4px;
+                gap: 3px;
+            }
+            
+            .control-button {
+                width: 42px;
+                height: 36px;
+            }
+            
+            .control-button.hang-up {
+                width: 48px;
+            }
+            
+            #current-time {
+                font-size: 0.8rem;
+            }
+            
+            /* Summary modal */
+            #summary-content {
+                padding: 15px 10px;
+                margin: 5px;
+            }
+            
+            #summary-content h2 {
+                font-size: 1.2rem;
+            }
+        }
+        
+        /* Extra small devices */
+        @media screen and (max-width: 360px) {
+            .lobby-setup h1 {
+                font-size: 1.1rem;
+            }
+            
+            #user-view {
+                width: calc(100vw - 12px);
+                height: 140px;
+                right: 6px;
+                bottom: 60px;
+            }
+            
+            #control-bar {
+                height: 55px;
+                padding: 0 3px;
+            }
+            
+            .control-button {
+                width: 38px;
+                height: 34px;
+            }
+            
+            .control-button.hang-up {
+                width: 44px;
             }
         }
 
@@ -553,12 +843,64 @@
                 background-color: var(--surface-color);
             }
             
+            .control-button:active {
+                background-color: #45474a;
+                transform: scale(0.95);
+            }
+            
             #user-view {
-                touch-action: pan-y pan-x;
+                touch-action: manipulation;
             }
             
             .drag-handle {
                 touch-action: none;
+                padding: 10px; /* Larger touch target */
+            }
+            
+            /* Larger touch targets for mobile */
+            .tab-button {
+                min-height: 44px;
+            }
+            
+            #join-btn {
+                min-height: 48px;
+            }
+            
+            .close-side-panel-btn {
+                padding: 8px;
+                min-width: 44px;
+                min-height: 44px;
+            }
+        }
+        
+        /* Landscape orientation optimizations */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            #lobby-screen {
+                flex-direction: row;
+                max-width: 100%;
+                padding: 10px;
+            }
+            
+            .lobby-preview {
+                flex: 1;
+                min-height: auto;
+            }
+            
+            .lobby-setup {
+                flex: 1;
+            }
+            
+            #interviewer-view {
+                max-height: calc(100vh - 80px);
+            }
+            
+            #user-view {
+                height: 120px;
+                bottom: 55px;
+            }
+            
+            #control-bar {
+                height: 50px;
             }
         }
     </style>
@@ -743,17 +1085,26 @@
                 
                 // Prevent drag when clicking on textarea
                 answerInput.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
                     if (isDragging) {
-                        e.stopPropagation();
                         stopDrag();
                     }
                 });
                 
                 answerInput.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
                     if (isDragging) {
-                        e.stopPropagation();
                         stopDrag();
                     }
+                });
+                
+                // Prevent any drag initiation from textarea area
+                answerInput.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                
+                answerInput.addEventListener('focus', (e) => {
+                    e.stopPropagation();
                 });
             }
             
@@ -766,14 +1117,19 @@
                 startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
                 startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
                 
-                // Get current transform position
+                // Get current position (either from transform or CSS position)
                 const transform = userView.style.transform;
-                if (transform) {
+                if (transform && transform.includes('translate')) {
                     const match = transform.match(/translate\((-?\d+(\.\d+)?)px,\s*(-?\d+(\.\d+)?)px\)/);
                     if (match) {
                         currentTransformX = parseFloat(match[1]);
                         currentTransformY = parseFloat(match[3]);
                     }
+                } else {
+                    // If no transform, calculate position from current CSS position
+                    const rect = userView.getBoundingClientRect();
+                    currentTransformX = rect.left;
+                    currentTransformY = rect.top;
                 }
                 
                 userView.classList.add('dragging');
@@ -802,12 +1158,15 @@
                 const constrainedX = Math.max(0, Math.min(maxX, newX));
                 const constrainedY = Math.max(0, Math.min(maxY, newY));
                 
-                // Remove any existing positioning styles and use transform only
-                userView.style.bottom = 'auto';
-                userView.style.right = 'auto';
-                userView.style.left = '0';
-                userView.style.top = '0';
-                userView.style.transform = `translate(${constrainedX}px, ${constrainedY}px)`;
+                // Only modify positioning when actually dragging
+                if (isDragging) {
+                    // Remove any existing positioning styles and use transform only
+                    userView.style.bottom = 'auto';
+                    userView.style.right = 'auto';
+                    userView.style.left = '0';
+                    userView.style.top = '0';
+                    userView.style.transform = `translate(${constrainedX}px, ${constrainedY}px)`;
+                }
             }
             
             function stopDrag() {
@@ -1115,6 +1474,9 @@
             // Initialize draggable functionality
             makeDraggable();
             
+            // Mobile-specific optimizations
+            initializeMobileOptimizations();
+            
             async function speakText(text) {
                 const apiKey = apiKeyInCallInput.value.trim();
                 if (!apiKey || !text) return;
@@ -1421,6 +1783,79 @@
                         ${summary.off_topic_count > 0 ? `(${summary.off_topic_count} off-topic responses)` : ''}
                     </div>
                 `;
+            }
+            
+            // Mobile-specific optimizations
+            function initializeMobileOptimizations() {
+                // Prevent zoom on input focus for iOS
+                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                    const inputs = document.querySelectorAll('input, select, textarea');
+                    inputs.forEach(input => {
+                        if (input.style.fontSize === '' || parseFloat(input.style.fontSize) < 16) {
+                            input.style.fontSize = '16px';
+                        }
+                    });
+                }
+                
+                // Add viewport meta tag if not present
+                if (!document.querySelector('meta[name="viewport"]')) {
+                    const viewport = document.createElement('meta');
+                    viewport.name = 'viewport';
+                    viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                    document.head.appendChild(viewport);
+                }
+                
+                // Optimize draggable for mobile
+                if (window.innerWidth <= 768) {
+                    // Make drag handle larger on mobile
+                    dragHandle.style.padding = '12px';
+                    
+                    // Adjust user view position for mobile
+                    const adjustUserViewForMobile = () => {
+                        const screenWidth = window.innerWidth;
+                        const screenHeight = window.innerHeight;
+                        
+                        if (screenWidth <= 480) {
+                            userView.style.width = `${Math.min(320, screenWidth - 16)}px`;
+                            userView.style.right = '8px';
+                            userView.style.bottom = '65px';
+                        } else if (screenWidth <= 768) {
+                            userView.style.width = `${Math.min(350, screenWidth - 20)}px`;
+                            userView.style.right = '10px';
+                            userView.style.bottom = '75px';
+                        }
+                    };
+                    
+                    adjustUserViewForMobile();
+                    window.addEventListener('resize', adjustUserViewForMobile);
+                    window.addEventListener('orientationchange', () => {
+                        setTimeout(adjustUserViewForMobile, 100);
+                    });
+                }
+                
+                // Improve touch scrolling
+                const scrollableElements = document.querySelectorAll('#chat-history, #settings-content, #summary-content');
+                scrollableElements.forEach(element => {
+                    element.style.webkitOverflowScrolling = 'touch';
+                });
+                
+                // Add haptic feedback for mobile (if supported)
+                if ('vibrate' in navigator) {
+                    const addHapticFeedback = (element) => {
+                        element.addEventListener('touchstart', () => {
+                            navigator.vibrate(10); // Short vibration
+                        });
+                    };
+                    
+                    // Add haptic feedback to buttons
+                    document.querySelectorAll('.control-button, #join-btn, .tab-button').forEach(addHapticFeedback);
+                }
+                
+                // Handle safe area insets for devices with notches
+                if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
+                    document.body.style.paddingTop = 'env(safe-area-inset-top)';
+                    document.body.style.paddingBottom = 'env(safe-area-inset-bottom)';
+                }
             }
             
             // Event listeners for management
