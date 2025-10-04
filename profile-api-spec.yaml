@@ -1,0 +1,1154 @@
+openapi: 3.0.3
+info:
+  title: Profile Management API
+  description: API for managing user profiles, including personal information, work experience, education, skills, achievements, and projects
+  version: 1.0.0
+  contact:
+    name: AI Interview Hub
+    email: support@aiinterviewhub.com
+servers:
+  - url: https://api.aiinterviewhub.com/v1
+    description: Production server
+  - url: https://staging-api.aiinterviewhub.com/v1
+    description: Staging server
+  - url: http://localhost:3000/api/v1
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /profile:
+    get:
+      summary: Get user profile
+      description: Retrieve the complete user profile including all sections
+      operationId: getProfile
+      tags:
+        - Profile
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+              example:
+                profile:
+                  name: "Alex Johnson"
+                  title: "Senior Software Engineer"
+                  email: "alex.johnson@example.com"
+                  location: "San Francisco, CA"
+                  phone: "+1 (555) 123-4567"
+                experiences:
+                  - id: 1
+                    role: "Senior Software Engineer"
+                    company: "Tech Corp"
+                    dates: "2022 - Present"
+                    description: "Lead development of cloud-native applications using React and Node.js"
+                education:
+                  - id: 1
+                    degree: "BS Computer Science"
+                    school: "University of California"
+                    dates: "2015 - 2019"
+                skills: ["JavaScript", "React", "Node.js", "TypeScript", "Python"]
+                achievements:
+                  - id: 1
+                    title: "Top Performer - JavaScript Interview"
+                    date: "2025-09"
+                projects:
+                  - id: 1
+                    name: "E-Commerce Platform"
+                    description: "Full-stack e-commerce solution with React, Node.js, and PostgreSQL"
+                    technologies: ["React", "Node.js", "PostgreSQL", "Stripe API"]
+                    githubUrl: "https://github.com/alex/ecommerce-platform"
+                    liveUrl: "https://ecommerce-demo.com"
+                    status: "Completed"
+                    date: "2024-12"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update user profile
+      description: Update the complete user profile with all sections
+      operationId: updateProfile
+      tags:
+        - Profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateRequest'
+            example:
+              profile:
+                name: "Alex Johnson"
+                title: "Senior Software Engineer"
+                email: "alex.johnson@example.com"
+                location: "San Francisco, CA"
+                phone: "+1 (555) 123-4567"
+              experiences:
+                - id: 1
+                  role: "Senior Software Engineer"
+                  company: "Tech Corp"
+                  dates: "2022 - Present"
+                  description: "Lead development of cloud-native applications using React and Node.js"
+              education:
+                - id: 1
+                  degree: "BS Computer Science"
+                  school: "University of California"
+                  dates: "2015 - 2019"
+              skills: ["JavaScript", "React", "Node.js", "TypeScript", "Python"]
+              achievements:
+                - id: 1
+                  title: "Top Performer - JavaScript Interview"
+                  date: "2025-09"
+              projects:
+                - id: 1
+                  name: "E-Commerce Platform"
+                  description: "Full-stack e-commerce solution with React, Node.js, and PostgreSQL"
+                  technologies: ["React", "Node.js", "PostgreSQL", "Stripe API"]
+                  githubUrl: "https://github.com/alex/ecommerce-platform"
+                  liveUrl: "https://ecommerce-demo.com"
+                  status: "Completed"
+                  date: "2024-12"
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/experiences:
+    get:
+      summary: Get work experiences
+      description: Retrieve all work experiences for the user
+      operationId: getExperiences
+      tags:
+        - Experiences
+      responses:
+        '200':
+          description: Work experiences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Experience'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add work experience
+      description: Add a new work experience entry
+      operationId: addExperience
+      tags:
+        - Experiences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperienceCreateRequest'
+      responses:
+        '201':
+          description: Work experience added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experience'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/experiences/{experienceId}:
+    get:
+      summary: Get specific work experience
+      description: Retrieve a specific work experience by ID
+      operationId: getExperience
+      tags:
+        - Experiences
+      parameters:
+        - name: experienceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Work experience retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experience'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update work experience
+      description: Update a specific work experience
+      operationId: updateExperience
+      tags:
+        - Experiences
+      parameters:
+        - name: experienceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperienceUpdateRequest'
+      responses:
+        '200':
+          description: Work experience updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experience'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete work experience
+      description: Delete a specific work experience
+      operationId: deleteExperience
+      tags:
+        - Experiences
+      parameters:
+        - name: experienceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Work experience deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/education:
+    get:
+      summary: Get education history
+      description: Retrieve all education entries for the user
+      operationId: getEducation
+      tags:
+        - Education
+      responses:
+        '200':
+          description: Education history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Education'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add education entry
+      description: Add a new education entry
+      operationId: addEducation
+      tags:
+        - Education
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EducationCreateRequest'
+      responses:
+        '201':
+          description: Education entry added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Education'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/education/{educationId}:
+    put:
+      summary: Update education entry
+      description: Update a specific education entry
+      operationId: updateEducation
+      tags:
+        - Education
+      parameters:
+        - name: educationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EducationUpdateRequest'
+      responses:
+        '200':
+          description: Education entry updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Education'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete education entry
+      description: Delete a specific education entry
+      operationId: deleteEducation
+      tags:
+        - Education
+      parameters:
+        - name: educationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Education entry deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/skills:
+    get:
+      summary: Get skills
+      description: Retrieve all skills for the user
+      operationId: getSkills
+      tags:
+        - Skills
+      responses:
+        '200':
+          description: Skills retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example: ["JavaScript", "React", "Node.js", "TypeScript", "Python"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add skill
+      description: Add a new skill to the user's profile
+      operationId: addSkill
+      tags:
+        - Skills
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                skill:
+                  type: string
+                  example: "Docker"
+              required:
+                - skill
+      responses:
+        '201':
+          description: Skill added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Skill added successfully"
+                  skills:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Remove skill
+      description: Remove a skill from the user's profile
+      operationId: removeSkill
+      tags:
+        - Skills
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                skill:
+                  type: string
+                  example: "Docker"
+              required:
+                - skill
+      responses:
+        '200':
+          description: Skill removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Skill removed successfully"
+                  skills:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Skill not found
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/achievements:
+    get:
+      summary: Get achievements
+      description: Retrieve all achievements for the user
+      operationId: getAchievements
+      tags:
+        - Achievements
+      responses:
+        '200':
+          description: Achievements retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Achievement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add achievement
+      description: Add a new achievement to the user's profile
+      operationId: addAchievement
+      tags:
+        - Achievements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AchievementCreateRequest'
+      responses:
+        '201':
+          description: Achievement added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Achievement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/achievements/{achievementId}:
+    put:
+      summary: Update achievement
+      description: Update a specific achievement
+      operationId: updateAchievement
+      tags:
+        - Achievements
+      parameters:
+        - name: achievementId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AchievementUpdateRequest'
+      responses:
+        '200':
+          description: Achievement updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Achievement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete achievement
+      description: Delete a specific achievement
+      operationId: deleteAchievement
+      tags:
+        - Achievements
+      parameters:
+        - name: achievementId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Achievement deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/projects:
+    get:
+      summary: Get projects
+      description: Retrieve all projects for the user
+      operationId: getProjects
+      tags:
+        - Projects
+      responses:
+        '200':
+          description: Projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add project
+      description: Add a new project to the user's profile
+      operationId: addProject
+      tags:
+        - Projects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateRequest'
+      responses:
+        '201':
+          description: Project added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/projects/{projectId}:
+    get:
+      summary: Get specific project
+      description: Retrieve a specific project by ID
+      operationId: getProject
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Project retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update project
+      description: Update a specific project
+      operationId: updateProject
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdateRequest'
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete project
+      description: Delete a specific project
+      operationId: deleteProject
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Project deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profile/generate-resume:
+    post:
+      summary: Generate ATS-optimized resume
+      description: Generate a professional, ATS-optimized resume from the user's profile data
+      operationId: generateResume
+      tags:
+        - Resume
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format:
+                  type: string
+                  enum: [pdf, docx, html]
+                  default: pdf
+                  description: Output format for the resume
+                template:
+                  type: string
+                  enum: [modern, classic, creative, minimal]
+                  default: modern
+                  description: Resume template style
+              example:
+                format: "pdf"
+                template: "modern"
+      responses:
+        '200':
+          description: Resume generated successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: object
+                properties:
+                  downloadUrl:
+                    type: string
+                    format: uri
+                    example: "https://api.aiinterviewhub.com/v1/resumes/user-123-resume.pdf"
+                  expiresAt:
+                    type: string
+                    format: date-time
+                    example: "2024-12-31T23:59:59Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Profile:
+      type: object
+      properties:
+        profile:
+          $ref: '#/components/schemas/ProfileInfo'
+        experiences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Experience'
+        education:
+          type: array
+          items:
+            $ref: '#/components/schemas/Education'
+        skills:
+          type: array
+          items:
+            type: string
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Achievement'
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+
+    ProfileInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Alex Johnson"
+        title:
+          type: string
+          example: "Senior Software Engineer"
+        email:
+          type: string
+          format: email
+          example: "alex.johnson@example.com"
+        location:
+          type: string
+          example: "San Francisco, CA"
+        phone:
+          type: string
+          example: "+1 (555) 123-4567"
+
+    ProfileUpdateRequest:
+      type: object
+      properties:
+        profile:
+          $ref: '#/components/schemas/ProfileInfo'
+        experiences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Experience'
+        education:
+          type: array
+          items:
+            $ref: '#/components/schemas/Education'
+        skills:
+          type: array
+          items:
+            type: string
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Achievement'
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+
+    Experience:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        role:
+          type: string
+          example: "Senior Software Engineer"
+        company:
+          type: string
+          example: "Tech Corp"
+        dates:
+          type: string
+          example: "2022 - Present"
+        description:
+          type: string
+          example: "Lead development of cloud-native applications using React and Node.js"
+
+    ExperienceCreateRequest:
+      type: object
+      required:
+        - role
+        - company
+      properties:
+        role:
+          type: string
+          example: "Software Engineer"
+        company:
+          type: string
+          example: "StartupXYZ"
+        dates:
+          type: string
+          example: "2019 - 2022"
+        description:
+          type: string
+          example: "Built scalable microservices architecture for e-commerce platform"
+
+    ExperienceUpdateRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          example: "Senior Software Engineer"
+        company:
+          type: string
+          example: "Tech Corp"
+        dates:
+          type: string
+          example: "2022 - Present"
+        description:
+          type: string
+          example: "Lead development of cloud-native applications using React and Node.js"
+
+    Education:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        degree:
+          type: string
+          example: "BS Computer Science"
+        school:
+          type: string
+          example: "University of California"
+        dates:
+          type: string
+          example: "2015 - 2019"
+
+    EducationCreateRequest:
+      type: object
+      required:
+        - degree
+        - school
+      properties:
+        degree:
+          type: string
+          example: "MS Computer Science"
+        school:
+          type: string
+          example: "Stanford University"
+        dates:
+          type: string
+          example: "2019 - 2021"
+
+    EducationUpdateRequest:
+      type: object
+      properties:
+        degree:
+          type: string
+          example: "BS Computer Science"
+        school:
+          type: string
+          example: "University of California"
+        dates:
+          type: string
+          example: "2015 - 2019"
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Top Performer - JavaScript Interview"
+        date:
+          type: string
+          example: "2025-09"
+
+    AchievementCreateRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: "Perfect Score - React Assessment"
+        date:
+          type: string
+          example: "2025-08"
+
+    AchievementUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Top Performer - JavaScript Interview"
+        date:
+          type: string
+          example: "2025-09"
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: "E-Commerce Platform"
+        description:
+          type: string
+          example: "Full-stack e-commerce solution with React, Node.js, and PostgreSQL"
+        technologies:
+          type: array
+          items:
+            type: string
+          example: ["React", "Node.js", "PostgreSQL", "Stripe API"]
+        githubUrl:
+          type: string
+          format: uri
+          example: "https://github.com/alex/ecommerce-platform"
+        liveUrl:
+          type: string
+          format: uri
+          example: "https://ecommerce-demo.com"
+        status:
+          type: string
+          enum: [Completed, "In Progress", Planned]
+          example: "Completed"
+        date:
+          type: string
+          example: "2024-12"
+
+    ProjectCreateRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          example: "AI Chat Application"
+        description:
+          type: string
+          example: "Real-time chat app with AI integration using OpenAI API"
+        technologies:
+          type: array
+          items:
+            type: string
+          example: ["React", "Socket.io", "OpenAI API", "MongoDB"]
+        githubUrl:
+          type: string
+          format: uri
+          example: "https://github.com/alex/ai-chat-app"
+        liveUrl:
+          type: string
+          format: uri
+          example: "https://ai-chat-demo.com"
+        status:
+          type: string
+          enum: [Completed, "In Progress", Planned]
+          default: Completed
+          example: "In Progress"
+        date:
+          type: string
+          example: "2025-01"
+
+    ProjectUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "E-Commerce Platform"
+        description:
+          type: string
+          example: "Full-stack e-commerce solution with React, Node.js, and PostgreSQL"
+        technologies:
+          type: array
+          items:
+            type: string
+          example: ["React", "Node.js", "PostgreSQL", "Stripe API"]
+        githubUrl:
+          type: string
+          format: uri
+          example: "https://github.com/alex/ecommerce-platform"
+        liveUrl:
+          type: string
+          format: uri
+          example: "https://ecommerce-demo.com"
+        status:
+          type: string
+          enum: [Completed, "In Progress", Planned]
+          example: "Completed"
+        date:
+          type: string
+          example: "2024-12"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation Error"
+        message:
+          type: string
+          example: "Invalid input data"
+        details:
+          type: array
+          items:
+            type: string
+          example: ["Name is required", "Email format is invalid"]
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Validation Error"
+            message: "Invalid input data"
+            details: ["Name is required", "Email format is invalid"]
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            message: "Invalid or missing authentication token"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Not Found"
+            message: "Resource not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+
+tags:
+  - name: Profile
+    description: User profile management
+  - name: Experiences
+    description: Work experience management
+  - name: Education
+    description: Education history management
+  - name: Skills
+    description: Skills management
+  - name: Achievements
+    description: Achievements management
+  - name: Projects
+    description: Projects portfolio management
+  - name: Resume
+    description: Resume generation

@@ -3,11 +3,12 @@ import Layout from '@/components/Layout';
 import BrutalistCard from '@/components/BrutalistCard';
 import BrutalistButton from '@/components/BrutalistButton';
 import BrutalistInput from '@/components/BrutalistInput';
-import { ArrowLeft, Mic, Send, MessageSquare, Settings, Phone, GripVertical } from 'lucide-react';
+import { ArrowLeft, Mic, Send, MessageSquare, Settings, Phone, GripVertical, Plus, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuthStore } from '@/store/authStore';
 
-const API_BASE_URL = 'https://f8abf4cdc39f.ngrok-free.app/v1';
+const API_BASE_URL = 'http://localhost/api';
 const SILENCE_THRESHOLD = 4000;
 
 interface Topic {
@@ -27,6 +28,7 @@ interface Summary {
 
 const TestPractice = () => {
   const { toast } = useToast();
+  const { user } = useAuthStore();
   const [screen, setScreen] = useState<'lobby' | 'meet' | 'summary'>('lobby');
   const [userId, setUserId] = useState('');
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -44,6 +46,11 @@ const TestPractice = () => {
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceBuffer, setVoiceBuffer] = useState('');
+  const [newTopicName, setNewTopicName] = useState('');
+  const [newQuestionText, setNewQuestionText] = useState('');
+  const [selectedQuestionTopic, setSelectedQuestionTopic] = useState('');
+  const [activeTab, setActiveTab] = useState<'interview' | 'topics' | 'questions'>('interview');
+  const [audioInitialized, setAudioInitialized] = useState(false);
   
   const audioPlayerRef = useRef<HTMLAudioElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -58,10 +65,22 @@ const TestPractice = () => {
   }, []);
 
   useEffect(() => {
+    if (user?.sub) {
+      setUserId(user.sub);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (userId) {
       fetchTopics();
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (topics.length > 0 && !selectedQuestionTopic) {
+      setSelectedQuestionTopic(topics[0].ID);
+    }
+  }, [topics, selectedQuestionTopic]);
 
   useEffect(() => {
     initializeSpeechRecognition();
@@ -212,6 +231,11 @@ const TestPractice = () => {
     if (body) config.body = JSON.stringify(body);
     
     try {
+      config.headers = {
+        ...(config.headers || {}),
+        "X-User-ID": userId, // 👈 set your userId here
+      };
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
       if (response.status === 204) return null;
       if (!response.ok) {
@@ -225,8 +249,33 @@ const TestPractice = () => {
     }
   };
 
+  const initializeAudio = async () => {
+    if (audioInitialized || !audioPlayerRef.current) return;
+    
+    try {
+      // Try to play a silent audio to initialize the audio context
+      const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+      await silentAudio.play();
+      silentAudio.pause();
+      setAudioInitialized(true);
+      console.log('Audio context initialized');
+    } catch (error) {
+      console.log('Audio initialization failed, will try on first user interaction:', error);
+    }
+  };
+
   const speakText = async (text: string) => {
-    if (!apiKey || !text) return;
+    if (!apiKey || !text) {
+      console.log('TTS skipped - missing API key or text:', { apiKey: !!apiKey, text: !!text });
+      return;
+    }
+    
+    // Initialize audio if not done yet
+    if (!audioInitialized) {
+      await initializeAudio();
+    }
+    
+    console.log('Starting TTS for text:', text.substring(0, 50) + '...');
     
     const requestBody = {
       input: { text },
@@ -247,15 +296,48 @@ const TestPractice = () => {
         }
       );
       
-      if (!response.ok) throw new Error('TTS API error');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('TTS API error:', response.status, errorText);
+        throw new Error(`TTS API error: ${response.status} - ${errorText}`);
+      }
+      
       const data = await response.json();
+      console.log('TTS API response received:', !!data.audioContent);
       
       if (data.audioContent && audioPlayerRef.current) {
+        console.log('Setting audio source and playing...');
         audioPlayerRef.current.src = `data:audio/mp3;base64,${data.audioContent}`;
-        audioPlayerRef.current.play();
+        
+        // Add event listeners for debugging
+        audioPlayerRef.current.onloadstart = () => console.log('Audio loading started');
+        audioPlayerRef.current.oncanplay = () => console.log('Audio can play');
+        audioPlayerRef.current.onplay = () => console.log('Audio started playing');
+        audioPlayerRef.current.onerror = (e) => console.error('Audio error:', e);
+        
+        const playPromise = audioPlayerRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            console.log('Audio play promise resolved');
+          }).catch((error) => {
+            console.error('Audio play failed:', error);
+            toast({
+              title: "Audio Playback Failed",
+              description: "Unable to play audio. Check your browser's autoplay settings.",
+              variant: "destructive",
+            });
+          });
+        }
+      } else {
+        console.error('TTS failed - missing audio content or player ref');
       }
     } catch (error) {
       console.error('TTS Failed:', error);
+      toast({
+        title: "Text-to-Speech Error",
+        description: error instanceof Error ? error.message : 'Unknown TTS error',
+        variant: "destructive",
+      });
     }
   };
 
@@ -284,6 +366,9 @@ const TestPractice = () => {
       });
       return;
     }
+
+    // Initialize audio on user interaction
+    await initializeAudio();
 
     setScreen('meet');
     setChatHistory([]);
@@ -365,99 +450,312 @@ const TestPractice = () => {
     }
   };
 
+  const handleCreateTopic = async () => {
+    if (!userId || !newTopicName.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please set a User ID and enter a topic name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await apiCall('/topics', 'POST', { topic: newTopicName.trim() });
+      setNewTopicName('');
+      toast({
+        title: "Topic Created",
+        description: "Topic created successfully!",
+        variant: "default",
+      });
+      fetchTopics();
+    } catch (error: any) {
+      toast({
+        title: "Error Creating Topic",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreateQuestion = async () => {
+    if (!userId || !selectedQuestionTopic || !newQuestionText.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a topic and enter question text.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await apiCall('/questions', 'POST', { 
+        topic_id: selectedQuestionTopic, 
+        question: newQuestionText.trim() 
+      });
+      setNewQuestionText('');
+      toast({
+        title: "Question Created",
+        description: "Question created successfully!",
+        variant: "default",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error Creating Question",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderLobbyScreen = () => (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <BrutalistCard>
-          <div className="flex flex-col items-center justify-center p-8">
-            <div className="w-32 h-32 bg-accent border-4 border-border flex items-center justify-center mb-6">
-              <span className="text-6xl">🤖</span>
-            </div>
-            <h2 className="text-center">AI Interviewer is ready</h2>
-          </div>
-        </BrutalistCard>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Test Practice</h1>
+        <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'}>
+          <ArrowLeft className="mr-2" size={16} />
+          Back
+        </BrutalistButton>
+      </div>
 
-        <BrutalistCard>
-          <div className="flex justify-between items-center mb-6">
-            <h2>Interview Setup</h2>
-            <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'}>
-              <ArrowLeft className="mr-2" size={16} />
-              Back
-            </BrutalistButton>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block font-bold uppercase text-sm mb-2">User ID</label>
-              <BrutalistInput
-                type="text"
-                placeholder="Enter your User ID"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold uppercase text-sm mb-2">Topic</label>
-              <select
-                className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                value={selectedTopic}
-                onChange={(e) => setSelectedTopic(e.target.value)}
-                disabled={topics.length === 0}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <BrutalistCard>
+            <div className="flex items-center gap-2 mb-6">
+              <button
+                className={`px-4 py-2 border-2 font-bold uppercase text-sm ${
+                  activeTab === 'interview' 
+                    ? 'border-primary bg-primary text-primary-foreground' 
+                    : 'border-border bg-background text-foreground hover:bg-muted'
+                }`}
+                onClick={() => setActiveTab('interview')}
               >
-                {topics.length === 0 ? (
-                  <option>Set User ID to load topics...</option>
-                ) : (
-                  topics.map((topic) => (
-                    <option key={topic.ID} value={topic.ID}>
-                      {topic.Topic}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-bold uppercase text-sm mb-2">Google Cloud API Key</label>
-              <BrutalistInput
-                type="password"
-                placeholder="Required for speech"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold uppercase text-sm mb-2">Interviewer Voice</label>
-              <select
-                className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                value={selectedVoice}
-                onChange={(e) => setSelectedVoice(e.target.value)}
+                Interview
+              </button>
+              <button
+                className={`px-4 py-2 border-2 font-bold uppercase text-sm ${
+                  activeTab === 'topics' 
+                    ? 'border-primary bg-primary text-primary-foreground' 
+                    : 'border-border bg-background text-foreground hover:bg-muted'
+                }`}
+                onClick={() => setActiveTab('topics')}
               >
-                <optgroup label="English (US)">
-                  <option value="en-US-Standard-B">US Male (Standard)</option>
-                  <option value="en-US-Standard-C">US Female (Standard)</option>
-                </optgroup>
-                <optgroup label="English (UK)">
-                  <option value="en-GB-Standard-B">UK Male (Standard)</option>
-                  <option value="en-GB-Standard-C">UK Female (Standard)</option>
-                </optgroup>
-                <optgroup label="English (Australia)">
-                  <option value="en-AU-Standard-B">AU Male (Standard)</option>
-                  <option value="en-AU-Standard-C">AU Female (Standard)</option>
-                </optgroup>
-                <optgroup label="English (India)">
-                  <option value="en-IN-Standard-B">Indian Male (Standard)</option>
-                  <option value="en-IN-Standard-A">Indian Female (Standard)</option>
-                </optgroup>
-              </select>
+                Topics
+              </button>
+              <button
+                className={`px-4 py-2 border-2 font-bold uppercase text-sm ${
+                  activeTab === 'questions' 
+                    ? 'border-primary bg-primary text-primary-foreground' 
+                    : 'border-border bg-background text-foreground hover:bg-muted'
+                }`}
+                onClick={() => setActiveTab('questions')}
+              >
+                Questions
+              </button>
             </div>
 
-            <BrutalistButton variant="primary" size="full" onClick={handleStartInterview}>
-              Join Now
-            </BrutalistButton>
-          </div>
-        </BrutalistCard>
+            {activeTab === 'interview' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-bold uppercase text-sm mb-2">User ID</label>
+                  <BrutalistInput
+                    type="text"
+                    placeholder="Auto-populated from your account"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    disabled={!!user?.sub}
+                    className={user?.sub ? 'bg-muted cursor-not-allowed' : ''}
+                  />
+                  {user?.sub && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Automatically set from your Zitadel account
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block font-bold uppercase text-sm mb-2">Topic</label>
+                  <select
+                    className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
+                    value={selectedTopic}
+                    onChange={(e) => setSelectedTopic(e.target.value)}
+                    disabled={topics.length === 0}
+                  >
+                    {topics.length === 0 ? (
+                      <option>Set User ID to load topics...</option>
+                    ) : (
+                      topics.map((topic) => (
+                        <option key={topic.ID} value={topic.ID}>
+                          {topic.Topic}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold uppercase text-sm mb-2">Google Cloud API Key</label>
+                  <BrutalistInput
+                    type="password"
+                    placeholder="Required for speech"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold uppercase text-sm mb-2">Interviewer Voice</label>
+                  <select
+                    className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
+                    value={selectedVoice}
+                    onChange={(e) => setSelectedVoice(e.target.value)}
+                  >
+                    <optgroup label="English (US)">
+                      <option value="en-US-Standard-B">US Male (Standard)</option>
+                      <option value="en-US-Standard-C">US Female (Standard)</option>
+                    </optgroup>
+                    <optgroup label="English (UK)">
+                      <option value="en-GB-Standard-B">UK Male (Standard)</option>
+                      <option value="en-GB-Standard-C">UK Female (Standard)</option>
+                    </optgroup>
+                    <optgroup label="English (Australia)">
+                      <option value="en-AU-Standard-B">AU Male (Standard)</option>
+                      <option value="en-AU-Standard-C">AU Female (Standard)</option>
+                    </optgroup>
+                    <optgroup label="English (India)">
+                      <option value="en-IN-Standard-B">Indian Male (Standard)</option>
+                      <option value="en-IN-Standard-A">Indian Female (Standard)</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                <div>
+                  <BrutalistButton 
+                    variant="secondary" 
+                    size="full"
+                    onClick={() => {
+                      if (!apiKey) {
+                        toast({
+                          title: "API Key Required",
+                          description: "Please enter your Google Cloud API key first.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      speakText("Hello! This is a test of the text-to-speech functionality. If you can hear this, the TTS is working correctly.");
+                    }}
+                    disabled={!apiKey}
+                  >
+                    Test Voice
+                  </BrutalistButton>
+                </div>
+
+                <BrutalistButton variant="primary" size="full" onClick={handleStartInterview}>
+                  Start Interview
+                </BrutalistButton>
+              </div>
+            )}
+
+            {activeTab === 'topics' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-bold uppercase text-sm mb-2">Create New Topic</label>
+                  <div className="flex gap-2">
+                    <BrutalistInput
+                      type="text"
+                      placeholder="Enter topic name"
+                      value={newTopicName}
+                      onChange={(e) => setNewTopicName(e.target.value)}
+                      className="flex-1"
+                    />
+                    <BrutalistButton 
+                      variant="secondary" 
+                      onClick={handleCreateTopic}
+                      disabled={!newTopicName.trim()}
+                    >
+                      <Plus size={16} />
+                    </BrutalistButton>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold uppercase text-sm mb-2">Existing Topics</label>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {topics.map((topic) => (
+                      <div key={topic.ID} className="p-3 border-2 border-border bg-background">
+                        <div className="font-bold">{topic.Topic}</div>
+                        <div className="text-sm text-muted-foreground">ID: {topic.ID}</div>
+                      </div>
+                    ))}
+                    {topics.length === 0 && (
+                      <div className="p-3 border-2 border-border bg-muted text-center text-muted-foreground">
+                        No topics found. Create one above.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'questions' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-bold uppercase text-sm mb-2">Create New Question</label>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block font-bold uppercase text-sm mb-2">Topic</label>
+                      <select
+                        className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
+                        value={selectedQuestionTopic}
+                        onChange={(e) => setSelectedQuestionTopic(e.target.value)}
+                        disabled={topics.length === 0}
+                      >
+                        <option value="">Select a topic...</option>
+                        {topics.map((topic) => (
+                          <option key={topic.ID} value={topic.ID}>
+                            {topic.Topic}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-bold uppercase text-sm mb-2">Question Text</label>
+                      <Textarea
+                        placeholder="Enter the question text..."
+                        value={newQuestionText}
+                        onChange={(e) => setNewQuestionText(e.target.value)}
+                        className="min-h-[100px] border-2 border-border resize-none"
+                      />
+                    </div>
+                    <BrutalistButton 
+                      variant="primary" 
+                      onClick={handleCreateQuestion}
+                      disabled={!selectedQuestionTopic || !newQuestionText.trim()}
+                    >
+                      <Plus className="mr-2" size={16} />
+                      Create Question
+                    </BrutalistButton>
+                  </div>
+                </div>
+              </div>
+            )}
+          </BrutalistCard>
+        </div>
+
+        <div className="lg:col-span-1">
+          <BrutalistCard>
+            <div className="flex flex-col items-center justify-center p-8">
+              <div className="w-32 h-32 bg-accent border-4 border-border flex items-center justify-center mb-6">
+                <span className="text-6xl">🤖</span>
+              </div>
+              <h2 className="text-center mb-4">AI Interviewer</h2>
+              <p className="text-center text-sm text-muted-foreground">
+                Practice your interview skills with our AI-powered interviewer. 
+                Get real-time feedback and improve your performance.
+              </p>
+            </div>
+          </BrutalistCard>
+        </div>
       </div>
     </div>
   );
@@ -681,7 +979,6 @@ const TestPractice = () => {
           </div>
         )}
       </BrutalistCard>
-      <audio ref={audioPlayerRef} />
     </div>
   );
 
@@ -690,6 +987,8 @@ const TestPractice = () => {
       {screen === 'lobby' && renderLobbyScreen()}
       {screen === 'meet' && renderMeetScreen()}
       {screen === 'summary' && renderSummaryScreen()}
+      {/* Audio element for TTS - available on all screens */}
+      <audio ref={audioPlayerRef} />
     </Layout>
   );
 };
