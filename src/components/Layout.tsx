@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, BarChart3, FileText, User, LogOut, Menu } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { useAuth } from 'react-oidc-context';
 import { useState } from 'react';
 
 interface LayoutProps {
@@ -12,11 +13,57 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
+  const auth = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      console.log('Starting logout process...');
+      console.log('Auth state before logout:', { 
+        isAuthenticated: auth.isAuthenticated, 
+        user: auth.user,
+        isLoading: auth.isLoading,
+        localAuth: isAuthenticated
+      });
+      
+      // Clear local auth store first
+      logout();
+      console.log('Local auth store cleared');
+      
+      // Set a flag to prevent auto-login after logout
+      sessionStorage.setItem('logout_initiated', 'true');
+      
+      // Clear OIDC session completely
+      if (auth.isAuthenticated) {
+        console.log('Clearing OIDC session...');
+        try {
+          // Clear the OIDC session by removing user data
+          await auth.removeUser();
+          console.log('OIDC user data cleared');
+        } catch (error) {
+          console.log('Failed to clear OIDC user data:', error);
+        }
+      }
+      
+      // Force clear any remaining OIDC state
+      try {
+        // Clear OIDC user manager state
+        if (auth.userManager) {
+          await auth.userManager.clearStaleState();
+          console.log('OIDC stale state cleared');
+        }
+      } catch (error) {
+        console.log('Failed to clear OIDC stale state:', error);
+      }
+      
+      console.log('Performing local logout redirect...');
+      navigate('/login?logout=true');
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      console.log('Falling back to local logout due to error');
+      navigate('/login?logout=true');
+    }
   };
 
   const navItems = [

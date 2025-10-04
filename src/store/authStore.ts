@@ -27,13 +27,40 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
   logout: () => {
+    console.log('Clearing local auth state...');
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_sub');
     localStorage.removeItem('user_email');
+    
+    // Clear OIDC-related localStorage items
+    const oidcKeys = Object.keys(localStorage).filter(key => 
+      key.startsWith('oidc.') || 
+      key.startsWith('oidc_client') ||
+      key.includes('oidc') ||
+      key.includes('user') ||
+      key.includes('token')
+    );
+    oidcKeys.forEach(key => {
+      localStorage.removeItem(key);
+      console.log(`Removed OIDC key: ${key}`);
+    });
+    
+    // Also clear sessionStorage
+    const sessionKeys = Object.keys(sessionStorage).filter(key => 
+      key.includes('oidc') ||
+      key.includes('user') ||
+      key.includes('token')
+    );
+    sessionKeys.forEach(key => {
+      sessionStorage.removeItem(key);
+      console.log(`Removed session key: ${key}`);
+    });
+    
     set({
       user: null,
       accessToken: null,
       isAuthenticated: false,
     });
+    console.log('Local auth state cleared');
   },
 }));

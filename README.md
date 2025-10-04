@@ -59,6 +59,48 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Zitadel OIDC Authentication
+
+## Zitadel Authentication Setup
+
+### Option 1: Use Demo Zitadel Instance (Quick Start)
+
+For development and testing, the app is configured to use Zitadel's demo instance by default. This should work out of the box for testing the authentication flow.
+
+### Option 2: Use Your Own Zitadel Instance
+
+To use your own Zitadel instance, create a `.env` file in the project root:
+
+```env
+# Your Zitadel instance URL (e.g., https://your-instance.zitadel.cloud)
+VITE_ZITADEL_AUTHORITY=https://your-zitadel-instance.com
+
+# Your Zitadel client ID
+VITE_ZITADEL_CLIENT_ID=your-client-id-here
+```
+
+**Important:** Make sure to configure the redirect URIs in your Zitadel client settings:
+
+**For Development:**
+```
+http://localhost:5173/callback
+http://localhost:5173/login
+```
+
+**For Production:**
+```
+https://your-domain.com/callback
+https://your-domain.com/login
+```
+
+**Note:** The `/login` URI is needed for the logout redirect functionality. If you can't add it to your Zitadel client, the logout will work locally but won't clear the Zitadel server session.
+
+### Troubleshooting
+
+If you see `net::ERR_NAME_NOT_RESOLVED` errors:
+1. Make sure you're using a valid Zitadel instance URL
+2. Check that your `.env` file has the correct `VITE_ZITADEL_AUTHORITY`
+3. For development, you can use the demo instance: `https://demo.zitadel.cloud`
 
 ## How can I deploy this project?
 
