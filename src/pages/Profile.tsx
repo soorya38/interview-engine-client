@@ -1,87 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import BrutalistCard from '@/components/BrutalistCard';
 import BrutalistButton from '@/components/BrutalistButton';
 import BrutalistInput from '@/components/BrutalistInput';
+import { useAuthStore } from '@/store/authStore';
+import { profileApi, type Profile, type ProfileInfo, type Experience, type Education, type Achievement, type Project } from '@/lib/profileApi';
+import { API_CONFIG, isApiAvailable } from '@/lib/config';
 import { User, Briefcase, GraduationCap, Award, FileDown, FolderOpen } from 'lucide-react';
 
 const Profile = () => {
+  const { user } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: 'Alex Johnson',
-    title: 'Senior Software Engineer',
-    email: 'alex.johnson@example.com',
-    location: 'San Francisco, CA',
-    phone: '+1 (555) 123-4567',
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Profile data state
+  const [profileData, setProfileData] = useState<Profile>({
+    profile: {
+      name: user?.name || 'User',
+      title: 'Role',
+      email: user?.email || '',
+      location: 'Address',
+      phone: 'Number',
+    },
+    experiences: [],
+    education: [],
+    skills: [],
+    achievements: [],
+    projects: [],
   });
-
-  const [experiences, setExperiences] = useState([
-    {
-      id: 1,
-      role: 'Senior Software Engineer',
-      company: 'Tech Corp',
-      dates: '2022 - Present',
-      description: 'Lead development of cloud-native applications using React and Node.js',
-    },
-    {
-      id: 2,
-      role: 'Software Engineer',
-      company: 'StartupXYZ',
-      dates: '2019 - 2022',
-      description: 'Built scalable microservices architecture for e-commerce platform',
-    },
-  ]);
-
-  const [education, setEducation] = useState([
-    {
-      id: 1,
-      degree: 'BS Computer Science',
-      school: 'University of California',
-      dates: '2015 - 2019',
-    },
-  ]);
-
-  const [skills, setSkills] = useState([
-    'JavaScript',
-    'React',
-    'Node.js',
-    'TypeScript',
-    'Python',
-    'SQL',
-    'System Design',
-    'AWS',
-    'Docker',
-    'GraphQL',
-  ]);
-
-  const [achievements, setAchievements] = useState([
-    { id: 1, title: 'Top Performer - JavaScript Interview', date: '2025-09' },
-    { id: 2, title: 'Perfect Score - React Assessment', date: '2025-08' },
-    { id: 3, title: '90+ Average Across All Topics', date: '2025-07' },
-  ]);
-
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: 'E-Commerce Platform',
-      description: 'Full-stack e-commerce solution with React, Node.js, and PostgreSQL',
-      technologies: ['React', 'Node.js', 'PostgreSQL', 'Stripe API'],
-      githubUrl: 'https://github.com/alex/ecommerce-platform',
-      liveUrl: 'https://ecommerce-demo.com',
-      status: 'Completed',
-      date: '2024-12'
-    },
-    {
-      id: 2,
-      name: 'AI Chat Application',
-      description: 'Real-time chat app with AI integration using OpenAI API',
-      technologies: ['React', 'Socket.io', 'OpenAI API', 'MongoDB'],
-      githubUrl: 'https://github.com/alex/ai-chat-app',
-      liveUrl: 'https://ai-chat-demo.com',
-      status: 'In Progress',
-      date: '2025-01'
-    },
-  ]);
 
   const [newSkill, setNewSkill] = useState('');
   const [newExperience, setNewExperience] = useState({
@@ -109,106 +56,440 @@ const Profile = () => {
     date: ''
   });
 
-  const handleGenerateResume = () => {
-    alert('Generating ATS-optimized resume... This will trigger API call to /generate-resume');
+  // Load profile data on component mount
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Check if API is available
+        if (!isApiAvailable()) {
+          // Development mode - load from localStorage
+          console.log('Development mode: loading from localStorage');
+          const savedProfile = localStorage.getItem('profile_data');
+          if (savedProfile) {
+            setProfileData(JSON.parse(savedProfile));
+          } else {
+            setProfileData({
+              profile: {
+                name: user?.name || 'User',
+                title: 'Role',
+                email: user?.email || '',
+                location: 'Address',
+                phone: 'Number',
+              },
+              experiences: [],
+              education: [],
+              skills: [],
+              achievements: [],
+              projects: [],
+            });
+          }
+          return;
+        }
+        
+        const data = await profileApi.getProfile();
+        setProfileData(data);
+      } catch (err: any) {
+        console.error('Failed to load profile:', err);
+        if (err.response?.status === 404) {
+          // Profile doesn't exist yet, check localStorage first
+          const savedProfile = localStorage.getItem('profile_data');
+          if (savedProfile) {
+            console.log('Loading profile from localStorage');
+            setProfileData(JSON.parse(savedProfile));
+          } else {
+            console.log('Profile not found, using default values');
+            setProfileData({
+              profile: {
+                name: user?.name || 'User',
+                title: 'Role',
+                email: user?.email || '',
+                location: 'Address',
+                phone: 'Number',
+              },
+              experiences: [],
+              education: [],
+              skills: [],
+              achievements: [],
+              projects: [],
+            });
+          }
+        } else {
+          setError('Failed to load profile data');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [user]);
+
+  // Update profile when user data changes
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        profile: {
+          ...prev.profile,
+          name: user.name || 'User',
+          email: user.email || '',
+        }
+      }));
+    }
+  }, [user]);
+
+  const handleGenerateResume = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await profileApi.generateResume();
+      // Open the download URL in a new tab
+      window.open(result.downloadUrl, '_blank');
+    } catch (err) {
+      console.error('Failed to generate resume:', err);
+      setError('Failed to generate resume');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSaveChanges = () => {
-    setIsEditing(false);
-    // Here you would typically save to backend
-    console.log('Profile saved:', { profile, experiences, education, skills, achievements, projects });
+  const handleSaveChanges = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check if API is available
+      if (!isApiAvailable()) {
+        // Development mode - save to localStorage
+        console.log('Development mode: saving to localStorage');
+        localStorage.setItem('profile_data', JSON.stringify(profileData));
+        setIsEditing(false);
+        setError('Profile saved locally (Development Mode)');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+      
+      await profileApi.updateProfile(profileData);
+      setIsEditing(false);
+    } catch (err: any) {
+      console.error('Failed to save profile:', err);
+      if (err.response?.status === 404) {
+        // API not available, save to localStorage as fallback
+        console.log('API endpoint not found, saving to localStorage');
+        localStorage.setItem('profile_data', JSON.stringify(profileData));
+        setIsEditing(false);
+        setError('Profile saved locally (API not available)');
+        setTimeout(() => setError(null), 3000);
+      } else if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else if (err.response?.status >= 500) {
+        setError('Server error. Please try again later.');
+      } else {
+        setError('Failed to save profile data. Please check your connection and try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddSkill = () => {
+  const handleAddSkill = async () => {
     if (newSkill.trim()) {
-      setSkills([...skills, newSkill.trim()]);
-      setNewSkill('');
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await profileApi.addSkill(newSkill.trim());
+        setProfileData(prev => ({
+          ...prev,
+          skills: result.skills
+        }));
+        setNewSkill('');
+      } catch (err) {
+        console.error('Failed to add skill:', err);
+        setError('Failed to add skill');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleRemoveSkill = (index: number) => {
-    setSkills(skills.filter((_, i) => i !== index));
+  const handleRemoveSkill = async (skill: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await profileApi.removeSkill(skill);
+      setProfileData(prev => ({
+        ...prev,
+        skills: result.skills
+      }));
+    } catch (err) {
+      console.error('Failed to remove skill:', err);
+      setError('Failed to remove skill');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddExperience = () => {
+  const handleAddExperience = async () => {
     if (newExperience.role && newExperience.company) {
-      setExperiences([...experiences, { ...newExperience, id: Date.now() }]);
-      setNewExperience({ role: '', company: '', dates: '', description: '' });
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await profileApi.addExperience(newExperience);
+        setProfileData(prev => ({
+          ...prev,
+          experiences: [...prev.experiences, result]
+        }));
+        setNewExperience({ role: '', company: '', dates: '', description: '' });
+      } catch (err) {
+        console.error('Failed to add experience:', err);
+        setError('Failed to add experience');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleAddEducation = () => {
+  const handleAddEducation = async () => {
     if (newEducation.degree && newEducation.school) {
-      setEducation([...education, { ...newEducation, id: Date.now() }]);
-      setNewEducation({ degree: '', school: '', dates: '' });
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await profileApi.addEducation(newEducation);
+        setProfileData(prev => ({
+          ...prev,
+          education: [...prev.education, result]
+        }));
+        setNewEducation({ degree: '', school: '', dates: '' });
+      } catch (err) {
+        console.error('Failed to add education:', err);
+        setError('Failed to add education');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleAddAchievement = () => {
+  const handleAddAchievement = async () => {
     if (newAchievement.title) {
-      setAchievements([...achievements, { ...newAchievement, id: Date.now() }]);
-      setNewAchievement({ title: '', date: '' });
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await profileApi.addAchievement(newAchievement);
+        setProfileData(prev => ({
+          ...prev,
+          achievements: [...prev.achievements, result]
+        }));
+        setNewAchievement({ title: '', date: '' });
+      } catch (err) {
+        console.error('Failed to add achievement:', err);
+        setError('Failed to add achievement');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleUpdateExperience = (id: number, field: string, value: string) => {
-    setExperiences(experiences.map(exp => 
-      exp.id === id ? { ...exp, [field]: value } : exp
-    ));
+  const handleUpdateExperience = async (id: number, field: string, value: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const experience = profileData?.experiences?.find(exp => exp.id === id);
+      if (experience) {
+        const updatedExperience = { ...experience, [field]: value };
+        const result = await profileApi.updateExperience(id, updatedExperience);
+        setProfileData(prev => ({
+          ...prev,
+          experiences: prev.experiences.map(exp => exp.id === id ? result : exp)
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to update experience:', err);
+      setError('Failed to update experience');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemoveExperience = (id: number) => {
-    setExperiences(experiences.filter(exp => exp.id !== id));
+  const handleRemoveExperience = async (id: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await profileApi.deleteExperience(id);
+      setProfileData(prev => ({
+        ...prev,
+        experiences: prev.experiences.filter(exp => exp.id !== id)
+      }));
+    } catch (err) {
+      console.error('Failed to remove experience:', err);
+      setError('Failed to remove experience');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemoveEducation = (id: number) => {
-    setEducation(education.filter(edu => edu.id !== id));
+  const handleRemoveEducation = async (id: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await profileApi.deleteEducation(id);
+      setProfileData(prev => ({
+        ...prev,
+        education: prev.education.filter(edu => edu.id !== id)
+      }));
+    } catch (err) {
+      console.error('Failed to remove education:', err);
+      setError('Failed to remove education');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemoveAchievement = (id: number) => {
-    setAchievements(achievements.filter(ach => ach.id !== id));
+  const handleRemoveAchievement = async (id: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await profileApi.deleteAchievement(id);
+      setProfileData(prev => ({
+        ...prev,
+        achievements: prev.achievements.filter(ach => ach.id !== id)
+      }));
+    } catch (err) {
+      console.error('Failed to remove achievement:', err);
+      setError('Failed to remove achievement');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddProject = () => {
+  const handleAddProject = async () => {
     if (newProject.name && newProject.description) {
-      const technologies = newProject.technologies.split(',').map(tech => tech.trim()).filter(tech => tech);
-      setProjects([...projects, { 
-        ...newProject, 
-        id: Date.now(),
-        technologies 
-      }]);
-      setNewProject({
-        name: '',
-        description: '',
-        technologies: '',
-        githubUrl: '',
-        liveUrl: '',
-        status: 'Completed',
-        date: ''
-      });
+      try {
+        setLoading(true);
+        setError(null);
+        const technologies = newProject.technologies.split(',').map(tech => tech.trim()).filter(tech => tech);
+        const projectData = {
+          ...newProject,
+          technologies,
+          status: newProject.status as 'Completed' | 'In Progress' | 'Planned'
+        };
+        const result = await profileApi.addProject(projectData);
+        setProfileData(prev => ({
+          ...prev,
+          projects: [...prev.projects, result]
+        }));
+        setNewProject({
+          name: '',
+          description: '',
+          technologies: '',
+          githubUrl: '',
+          liveUrl: '',
+          status: 'Completed',
+          date: ''
+        });
+      } catch (err) {
+        console.error('Failed to add project:', err);
+        setError('Failed to add project');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleUpdateProject = (id: number, field: string, value: string) => {
-    setProjects(projects.map(project => 
-      project.id === id ? { ...project, [field]: value } : project
-    ));
+  const handleUpdateProject = async (id: number, field: string, value: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const project = profileData?.projects?.find(proj => proj.id === id);
+      if (project) {
+        const updatedProject = { ...project, [field]: value };
+        const result = await profileApi.updateProject(id, updatedProject);
+        setProfileData(prev => ({
+          ...prev,
+          projects: prev.projects.map(proj => proj.id === id ? result : proj)
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to update project:', err);
+      setError('Failed to update project');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemoveProject = (id: number) => {
-    setProjects(projects.filter(project => project.id !== id));
+  const handleRemoveProject = async (id: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await profileApi.deleteProject(id);
+      setProfileData(prev => ({
+        ...prev,
+        projects: prev.projects.filter(proj => proj.id !== id)
+      }));
+    } catch (err) {
+      console.error('Failed to remove project:', err);
+      setError('Failed to remove project');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loading && !profileData?.profile?.name) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-96">
+            <div className="text-center">
+              <h2 className="text-xl font-bold uppercase mb-4">Loading Profile...</h2>
+              <p>Please wait while we load your profile data.</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-destructive text-destructive-foreground border-4 border-destructive p-4 mb-6">
+            <p className="font-bold text-sm uppercase mb-2">Error</p>
+            <p className="text-sm">{error}</p>
+            <BrutalistButton
+              variant="destructive"
+              size="default"
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Retry
+            </BrutalistButton>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex justify-between items-center">
-          <h1>Profile</h1>
+          <div>
+            <h1>Profile</h1>
+            {(!isApiAvailable() || error?.includes('Development Mode') || error?.includes('API not available')) && (
+              <p className="text-sm text-muted-foreground mt-1">
+                🔧 Development Mode: Profile data is saved locally
+              </p>
+            )}
+          </div>
           <BrutalistButton
             variant={isEditing ? 'success' : 'primary'}
             onClick={isEditing ? handleSaveChanges : () => setIsEditing(true)}
+            disabled={loading}
           >
-            {isEditing ? 'Save Changes' : 'Edit Profile'}
+            {loading ? 'Loading...' : isEditing ? 'Save Changes' : 'Edit Profile'}
           </BrutalistButton>
         </div>
 
@@ -224,39 +505,54 @@ const Profile = () => {
               {isEditing ? (
                 <div className="space-y-4">
                   <BrutalistInput
-                    value={profile.name}
-                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    value={profileData?.profile?.name || ''}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      profile: { ...prev.profile, name: e.target.value }
+                    }))}
                     placeholder="Full Name"
                   />
                   <BrutalistInput
-                    value={profile.title}
-                    onChange={(e) => setProfile({ ...profile, title: e.target.value })}
+                    value={profileData?.profile?.title || ''}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      profile: { ...prev.profile, title: e.target.value }
+                    }))}
                     placeholder="Job Title"
                   />
                   <BrutalistInput
-                    value={profile.email}
-                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                    value={profileData?.profile?.email || ''}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      profile: { ...prev.profile, email: e.target.value }
+                    }))}
                     placeholder="Email"
                   />
                   <BrutalistInput
-                    value={profile.location}
-                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                    value={profileData?.profile?.location || ''}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      profile: { ...prev.profile, location: e.target.value }
+                    }))}
                     placeholder="Location"
                   />
                   <BrutalistInput
-                    value={profile.phone}
-                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    value={profileData?.profile?.phone || ''}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      profile: { ...prev.profile, phone: e.target.value }
+                    }))}
                     placeholder="Phone"
                   />
                 </div>
               ) : (
                 <div className="text-center">
-                  <h2 className="mb-2">{profile.name}</h2>
-                  <p className="text-xl font-bold mb-4">{profile.title}</p>
+                  <h2 className="mb-2">{profileData?.profile?.name || 'User'}</h2>
+                  <p className="text-xl font-bold mb-4">{profileData?.profile?.title || 'Role'}</p>
                   <div className="space-y-2 text-left">
-                    <p className="font-bold">{profile.email}</p>
-                    <p className="font-bold">{profile.location}</p>
-                    <p className="font-bold">{profile.phone}</p>
+                    <p className="font-bold">{profileData?.profile?.email || ''}</p>
+                    <p className="font-bold">{profileData?.profile?.location || 'Address'}</p>
+                    <p className="font-bold">{profileData?.profile?.phone || 'Number'}</p>
                   </div>
                 </div>
               )}
@@ -283,7 +579,7 @@ const Profile = () => {
                 Experience
               </h2>
               <div className="space-y-6">
-                {experiences.map((exp) => (
+                {profileData?.experiences?.map((exp) => (
                   <div key={exp.id} className="border-l-4 border-accent pl-4 pb-4">
                     {isEditing ? (
                       <div className="space-y-3">
@@ -370,29 +666,38 @@ const Profile = () => {
                 Education
               </h2>
               <div className="space-y-4">
-                {education.map((edu) => (
+                {profileData?.education?.map((edu) => (
                   <div key={edu.id} className="border-l-4 border-success pl-4">
                     {isEditing ? (
                       <div className="space-y-3">
                         <BrutalistInput
                           value={edu.degree}
-                          onChange={(e) => setEducation(education.map(ed => 
-                            ed.id === edu.id ? { ...ed, degree: e.target.value } : ed
-                          ))}
+                          onChange={(e) => setProfileData(prev => ({
+                            ...prev,
+                            education: prev.education.map(ed => 
+                              ed.id === edu.id ? { ...ed, degree: e.target.value } : ed
+                            )
+                          }))}
                           placeholder="Degree"
                         />
                         <BrutalistInput
                           value={edu.school}
-                          onChange={(e) => setEducation(education.map(ed => 
-                            ed.id === edu.id ? { ...ed, school: e.target.value } : ed
-                          ))}
+                          onChange={(e) => setProfileData(prev => ({
+                            ...prev,
+                            education: prev.education.map(ed => 
+                              ed.id === edu.id ? { ...ed, school: e.target.value } : ed
+                            )
+                          }))}
                           placeholder="School"
                         />
                         <BrutalistInput
                           value={edu.dates}
-                          onChange={(e) => setEducation(education.map(ed => 
-                            ed.id === edu.id ? { ...ed, dates: e.target.value } : ed
-                          ))}
+                          onChange={(e) => setProfileData(prev => ({
+                            ...prev,
+                            education: prev.education.map(ed => 
+                              ed.id === edu.id ? { ...ed, dates: e.target.value } : ed
+                            )
+                          }))}
                           placeholder="Dates"
                         />
                         <BrutalistButton 
@@ -443,7 +748,7 @@ const Profile = () => {
             <BrutalistCard>
               <h2 className="mb-6">Skills</h2>
               <div className="flex flex-wrap gap-3">
-                {skills.map((skill, index) => (
+                {profileData?.skills?.map((skill, index) => (
                   <div
                     key={index}
                     className="px-4 py-2 bg-accent text-accent-foreground border-4 border-accent font-bold uppercase flex items-center gap-2"
@@ -452,7 +757,7 @@ const Profile = () => {
                     {isEditing && (
                       <button 
                         className="text-xl hover:text-destructive"
-                        onClick={() => handleRemoveSkill(index)}
+                        onClick={() => handleRemoveSkill(skill)}
                       >
                         ×
                       </button>
@@ -485,7 +790,7 @@ const Profile = () => {
                 Achievements
               </h2>
               <div className="space-y-3">
-                {achievements.map((achievement) => (
+                {profileData?.achievements?.map((achievement) => (
                   <div
                     key={achievement.id}
                     className="flex justify-between items-center border-b-4 border-success-foreground pb-3 last:border-0"
@@ -494,16 +799,22 @@ const Profile = () => {
                       <div className="flex-1 space-y-2">
                         <BrutalistInput
                           value={achievement.title}
-                          onChange={(e) => setAchievements(achievements.map(ach => 
-                            ach.id === achievement.id ? { ...ach, title: e.target.value } : ach
-                          ))}
+                          onChange={(e) => setProfileData(prev => ({
+                            ...prev,
+                            achievements: prev.achievements.map(ach => 
+                              ach.id === achievement.id ? { ...ach, title: e.target.value } : ach
+                            )
+                          }))}
                           placeholder="Achievement title"
                         />
                         <BrutalistInput
                           value={achievement.date}
-                          onChange={(e) => setAchievements(achievements.map(ach => 
-                            ach.id === achievement.id ? { ...ach, date: e.target.value } : ach
-                          ))}
+                          onChange={(e) => setProfileData(prev => ({
+                            ...prev,
+                            achievements: prev.achievements.map(ach => 
+                              ach.id === achievement.id ? { ...ach, date: e.target.value } : ach
+                            )
+                          }))}
                           placeholder="Date"
                           className="w-32"
                         />
@@ -550,7 +861,7 @@ const Profile = () => {
                 Projects
               </h2>
               <div className="space-y-6">
-                {projects.map((project, index) => (
+                {profileData?.projects?.map((project, index) => (
                   <div key={project.id} className="border-l-4 border-success pl-4 pb-4 bg-white rounded-sm">
                     {index > 0 && <div className="border-t-2 border-gray-300 mb-4 -ml-4"></div>}
                     {isEditing ? (
