@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Neo-Brutalist Design System - HSL Only */
+    /* Base monochrome palette */
+    --brutalist-charcoal: 0 0% 17%;
+    --brutalist-gray: 0 0% 96%;
+    --brutalist-white: 0 0% 100%;
+    
+    /* Surgical accent colors */
+    --brutalist-error: 0 79% 70%;
+    --brutalist-success: 174 54% 59%;
+    --brutalist-interactive: 194 62% 56%;
+    
+    /* Core tokens */
+    --background: var(--brutalist-charcoal);
+    --foreground: var(--brutalist-gray);
+
+    --card: var(--brutalist-gray);
+    --card-foreground: var(--brutalist-charcoal);
+
+    --popover: var(--brutalist-gray);
+    --popover-foreground: var(--brutalist-charcoal);
+
+    --primary: var(--brutalist-charcoal);
+    --primary-foreground: var(--brutalist-gray);
+
+    --secondary: var(--brutalist-gray);
+    --secondary-foreground: var(--brutalist-charcoal);
+
+    --muted: 0 0% 85%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: var(--brutalist-interactive);
+    --accent-foreground: var(--brutalist-white);
+
+    --destructive: var(--brutalist-error);
+    --destructive-foreground: var(--brutalist-white);
+
+    --success: var(--brutalist-success);
+    --success-foreground: var(--brutalist-white);
+
+    --border: var(--brutalist-charcoal);
+    --input: var(--brutalist-gray);
+    --ring: var(--brutalist-interactive);
+
+    --radius: 0rem; /* Neo-brutalist: NO rounded corners */
+
+    /* Transition: Instant state changes only */
+    --transition-brutal: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* Neo-brutalist typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+    line-height: 1.2;
+  }
+
+  h1 {
+    font-size: 48px;
+  }
+
+  h2 {
+    font-size: 32px;
+  }
+
+  h3 {
+    font-size: 24px;
+  }
+
+  /* Remove all default animations */
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Hard-edged focus states */
+  *:focus-visible {
+    @apply outline-none ring-4 ring-accent;
+    outline-offset: 0;
+  }
+}
