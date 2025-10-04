@@ -683,8 +683,7 @@ const TestPractice = () => {
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {topics.map((topic) => (
                       <div key={topic.ID} className="p-3 border-2 border-border bg-background">
-                        <div className="font-bold">{topic.Topic}</div>
-                        <div className="text-sm text-muted-foreground">ID: {topic.ID}</div>
+                        <div className="font-bold text-foreground">{topic.Topic || 'Unnamed Topic'}</div>
                       </div>
                     ))}
                     {topics.length === 0 && (
