@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { useAuthStore } from '@/store/authStore';
 import BrutalistButton from '@/components/BrutalistButton';
@@ -7,6 +7,7 @@ import BrutalistCard from '@/components/BrutalistCard';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const auth = useAuth();
   const { login, isAuthenticated } = useAuthStore();
@@ -36,8 +37,10 @@ const Login = () => {
 
     // Redirect if already authenticated (but not during logout)
     if (isAuthenticated && !isLogout && !logoutInitiated) {
-      console.log('User is authenticated, redirecting to dashboard');
-      navigate('/dashboard');
+      // Check if user came from a protected route
+      const from = location.state?.from?.pathname || '/dashboard';
+      console.log('User is authenticated, redirecting to:', from);
+      navigate(from, { replace: true });
       return;
     }
 

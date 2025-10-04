@@ -13,13 +13,24 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  accessToken: null,
-  isAuthenticated: false,
+  user: (() => {
+    const storedSub = localStorage.getItem('user_sub');
+    const storedEmail = localStorage.getItem('user_email');
+    const storedName = localStorage.getItem('user_name');
+    if (storedSub && storedEmail) {
+      return { sub: storedSub, email: storedEmail, name: storedName || undefined };
+    }
+    return null;
+  })(),
+  accessToken: localStorage.getItem('access_token'),
+  isAuthenticated: !!localStorage.getItem('access_token'),
   login: (token, sub, email, name) => {
     localStorage.setItem('access_token', token);
     localStorage.setItem('user_sub', sub);
     localStorage.setItem('user_email', email);
+    if (name) {
+      localStorage.setItem('user_name', name);
+    }
     set({
       user: { sub, email, name },
       accessToken: token,
@@ -31,6 +42,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_sub');
     localStorage.removeItem('user_email');
+    localStorage.removeItem('user_name');
     
     // Clear OIDC-related localStorage items
     const oidcKeys = Object.keys(localStorage).filter(key => 
