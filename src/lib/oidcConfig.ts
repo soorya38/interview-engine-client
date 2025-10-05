@@ -4,7 +4,8 @@
 // For development, use a working demo instance
 export const oidcConfig = {
   authority: import.meta.env.VITE_ZITADEL_AUTHORITY || 'http://localhost',
-  client_id: import.meta.env.VITE_ZITADEL_CLIENT_ID || '340519404208914436',
+  client_id: import.meta.env.VITE_ZITADEL_CLIENT_ID || '340722674860883973',
+
   redirect_uri: window.location.origin + '/callback',
   // post_logout_redirect_uri: window.location.origin + '/login', // Commented out until configured in Zitadel
   response_type: 'code',

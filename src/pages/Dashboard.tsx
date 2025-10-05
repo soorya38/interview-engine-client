@@ -93,17 +93,16 @@ const Dashboard = () => {
               </BrutalistCard>
 
               <BrutalistCard className="p-8">
-                <h3 className="mb-4">View Analytics</h3>
+                <h3 className="mb-4">Interview Summaries</h3>
                 <p className="mb-6 font-medium">
-                  Deep dive into your performance metrics. Identify strengths and areas for
-                  improvement.
+                  Review your interview history and detailed performance summaries. Track your progress over time.
                 </p>
                 <BrutalistButton
                   variant="accent"
                   size="full"
-                  onClick={() => navigate('/analytics')}
+                  onClick={() => navigate('/summaries')}
                 >
-                  View Reports
+                  View Summaries
                 </BrutalistButton>
               </BrutalistCard>
 

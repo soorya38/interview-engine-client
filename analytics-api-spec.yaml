@@ -1,0 +1,795 @@
+openapi: 3.0.3
+info:
+  title: Analytics API
+  description: API for retrieving user performance analytics and insights from interview data
+  version: 1.0.0
+  contact:
+    name: AI Interview Hub
+    email: support@aiinterviewhub.com
+
+servers:
+  - url: https://api.aiinterviewhub.com/v1
+    description: Production server
+  - url: https://staging-api.aiinterviewhub.com/v1
+    description: Staging server
+  - url: http://localhost/api
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /analytics/skills:
+    get:
+      summary: Get user skill analytics
+      description: Retrieves comprehensive skill analytics for a user based on stored interview summaries
+      operationId: getSkillsAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication
+        - name: time_period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all]
+            default: all
+          description: Time period for analytics calculation
+      responses:
+        '200':
+          description: Skill analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillsAnalytics'
+              example:
+                skill_radar:
+                  - subject: "JavaScript"
+                    score: 85
+                    full_mark: 100
+                  - subject: "React"
+                    score: 78
+                    full_mark: 100
+                  - subject: "Algorithms"
+                    score: 92
+                    full_mark: 100
+                  - subject: "System Design"
+                    score: 65
+                    full_mark: 100
+                  - subject: "Communication"
+                    score: 88
+                    full_mark: 100
+                strong_topics:
+                  - name: "JavaScript ES6+"
+                    score: 95
+                    questions: "19/20"
+                  - name: "React Hooks"
+                    score: 92
+                    questions: "23/25"
+                  - name: "Algorithms"
+                    score: 92
+                    questions: "18/20"
+                weak_topics:
+                  - name: "System Design"
+                    score: 65
+                    tip: "Review distributed systems patterns"
+                  - name: "SQL Optimization"
+                    score: 72
+                    tip: "Practice query optimization techniques"
+                overall_stats:
+                  total_interviews: 5
+                  average_score: 82.5
+                  improvement_rate: 15.2
+                  strongest_skill: "JavaScript"
+                  weakest_skill: "System Design"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/performance:
+    get:
+      summary: Get user performance analytics
+      description: Retrieves detailed performance analytics including trends, improvement areas, and recommendations
+      operationId: getPerformanceAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication
+        - name: time_period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all]
+            default: month
+          description: Time period for analytics
+        - name: topic_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter analytics by specific topic
+        - name: skill_tags
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Filter by specific skill tags
+          example: ["javascript", "react", "algorithms"]
+      responses:
+        '200':
+          description: Performance analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceAnalytics'
+              example:
+                performance_trend:
+                  - date: "2024-01-15"
+                    score: 85.5
+                    topic: "React"
+                  - date: "2024-01-14"
+                    score: 78.2
+                    topic: "JavaScript"
+                  - date: "2024-01-13"
+                    score: 92.1
+                    topic: "Algorithms"
+                topic_breakdown:
+                  - topic_id: "react"
+                    topic_name: "React Fundamentals"
+                    total_questions: 20
+                    correct_answers: 18
+                    average_score: 90
+                    time_spent: 45
+                  - topic_id: "js"
+                    topic_name: "JavaScript ES6+"
+                    total_questions: 25
+                    correct_answers: 20
+                    average_score: 80
+                    time_spent: 60
+                improvement_suggestions:
+                  - category: "Study Material"
+                    title: "Review React Hooks Patterns"
+                    description: "Focus on useEffect dependencies and custom hooks"
+                    priority: "high"
+                    resources: ["React Hooks Documentation", "Custom Hooks Tutorial"]
+                  - category: "Practice"
+                    title: "System Design Practice"
+                    description: "Work on distributed systems concepts"
+                    priority: "medium"
+                time_analysis:
+                  average_response_time: 45.2
+                  fastest_topic: "JavaScript"
+                  slowest_topic: "System Design"
+                  time_improvement: 12.5
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/topics:
+    get:
+      summary: Get topic performance breakdown
+      description: Retrieves detailed performance breakdown by topic with spider chart data
+      operationId: getTopicAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication
+        - name: time_period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all]
+            default: all
+          description: Time period for analytics
+      responses:
+        '200':
+          description: Topic analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicAnalytics'
+              example:
+                topics:
+                  - topic_name: "React Fundamentals"
+                    average_score: 90
+                    total_questions: 20
+                    correct_answers: 18
+                    time_spent: 45
+                    performance_trend: [85, 88, 92, 90]
+                  - topic_name: "JavaScript ES6+"
+                    average_score: 80
+                    total_questions: 25
+                    correct_answers: 20
+                    time_spent: 60
+                    performance_trend: [75, 78, 82, 80]
+                spider_chart_data:
+                  - subject: "React Fundamentals"
+                    score: 90
+                    full_mark: 100
+                  - subject: "JavaScript ES6+"
+                    score: 80
+                    full_mark: 100
+                  - subject: "Algorithms & Data Structures"
+                    score: 93
+                    full_mark: 100
+                  - subject: "System Design"
+                    score: 60
+                    full_mark: 100
+                  - subject: "Node.js Backend"
+                    score: 83
+                    full_mark: 100
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/trends:
+    get:
+      summary: Get performance trends
+      description: Retrieves performance trends over time with detailed metrics
+      operationId: getPerformanceTrends
+      tags:
+        - Analytics
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication
+        - name: time_period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all]
+            default: month
+          description: Time period for trends
+        - name: metric
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [score, time, accuracy, improvement]
+            default: score
+          description: Specific metric to analyze
+      responses:
+        '200':
+          description: Performance trends retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendAnalytics'
+              example:
+                trends:
+                  - date: "2024-01-15"
+                    score: 85.5
+                    time_spent: 45
+                    accuracy: 90
+                    topic: "React"
+                  - date: "2024-01-14"
+                    score: 78.2
+                    time_spent: 60
+                    accuracy: 80
+                    topic: "JavaScript"
+                summary:
+                  total_sessions: 10
+                  average_score: 82.5
+                  improvement_rate: 15.2
+                  best_performance: 95
+                  worst_performance: 65
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SkillsAnalytics:
+      type: object
+      required:
+        - skill_radar
+        - strong_topics
+        - weak_topics
+        - overall_stats
+      properties:
+        skill_radar:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillRadarItem'
+          description: Data for radar chart visualization
+        strong_topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicAnalytics'
+          description: Topics where user performs well
+        weak_topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicAnalytics'
+          description: Topics where user needs improvement
+        overall_stats:
+          $ref: '#/components/schemas/OverallStats'
+
+    SkillRadarItem:
+      type: object
+      required:
+        - subject
+        - score
+        - full_mark
+      properties:
+        subject:
+          type: string
+          description: Skill category name
+          example: "Algorithms"
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: User's score in this skill
+          example: 92
+        full_mark:
+          type: integer
+          description: Maximum possible score
+          example: 100
+
+    TopicAnalytics:
+      type: object
+      required:
+        - name
+        - score
+      properties:
+        name:
+          type: string
+          description: Topic name
+          example: "JavaScript ES6+"
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Performance score for this topic
+          example: 95
+        questions:
+          type: string
+          description: Questions answered correctly vs total
+          example: "19/20"
+        tip:
+          type: string
+          description: Improvement tip (for weak topics)
+          example: "Review distributed systems patterns"
+
+    OverallStats:
+      type: object
+      required:
+        - total_interviews
+        - average_score
+        - improvement_rate
+        - strongest_skill
+        - weakest_skill
+      properties:
+        total_interviews:
+          type: integer
+          minimum: 0
+          description: Total number of interviews completed
+          example: 25
+        average_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Average score across all interviews
+          example: 87.5
+        improvement_rate:
+          type: number
+          description: Percentage improvement over time
+          example: 15.2
+        strongest_skill:
+          type: string
+          description: User's strongest skill area
+          example: "JavaScript"
+        weakest_skill:
+          type: string
+          description: User's weakest skill area
+          example: "System Design"
+
+    PerformanceAnalytics:
+      type: object
+      required:
+        - performance_trend
+        - topic_breakdown
+        - improvement_suggestions
+        - time_analysis
+      properties:
+        performance_trend:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerformanceTrend'
+          description: Performance trends over time
+        topic_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicBreakdown'
+          description: Performance breakdown by topic
+        improvement_suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImprovementSuggestion'
+          description: Personalized improvement suggestions
+        time_analysis:
+          $ref: '#/components/schemas/TimeAnalysis'
+
+    PerformanceTrend:
+      type: object
+      required:
+        - date
+        - score
+        - topic
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date of the performance measurement
+          example: "2024-01-15"
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Score achieved on this date
+          example: 85.5
+        topic:
+          type: string
+          description: Topic of the interview
+          example: "React"
+
+    TopicBreakdown:
+      type: object
+      required:
+        - topic_id
+        - topic_name
+        - total_questions
+        - correct_answers
+        - average_score
+        - time_spent
+      properties:
+        topic_id:
+          type: string
+          description: Unique identifier for the topic
+          example: "react-fundamentals"
+        topic_name:
+          type: string
+          description: Human-readable topic name
+          example: "React Fundamentals"
+        total_questions:
+          type: integer
+          minimum: 0
+          description: Total questions attempted in this topic
+          example: 45
+        correct_answers:
+          type: integer
+          minimum: 0
+          description: Number of correct answers
+          example: 38
+        average_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Average score for this topic
+          example: 84.4
+        time_spent:
+          type: integer
+          minimum: 0
+          description: Total time spent on this topic (in minutes)
+          example: 180
+
+    ImprovementSuggestion:
+      type: object
+      required:
+        - category
+        - title
+        - description
+        - priority
+      properties:
+        category:
+          type: string
+          description: Category of the suggestion
+          example: "Study Material"
+        title:
+          type: string
+          description: Suggestion title
+          example: "Review React Hooks Patterns"
+        description:
+          type: string
+          description: Detailed suggestion description
+          example: "Focus on useEffect dependencies and custom hooks"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          description: Priority level of the suggestion
+          example: "high"
+        resources:
+          type: array
+          items:
+            type: string
+          description: Recommended resources
+          example: ["React Hooks Documentation", "Custom Hooks Tutorial"]
+
+    TimeAnalysis:
+      type: object
+      required:
+        - average_response_time
+        - fastest_topic
+        - slowest_topic
+        - time_improvement
+      properties:
+        average_response_time:
+          type: number
+          minimum: 0
+          description: Average time to answer questions (in seconds)
+          example: 45.2
+        fastest_topic:
+          type: string
+          description: Topic where user answers fastest
+          example: "JavaScript"
+        slowest_topic:
+          type: string
+          description: Topic where user takes most time
+          example: "System Design"
+        time_improvement:
+          type: number
+          description: Percentage improvement in response time
+          example: 12.5
+
+    TopicAnalytics:
+      type: object
+      required:
+        - topics
+        - spider_chart_data
+      properties:
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicPerformance'
+          description: List of topics with performance data
+        spider_chart_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpiderChartItem'
+          description: Data formatted for spider chart visualization
+
+    TopicPerformance:
+      type: object
+      required:
+        - topic_name
+        - average_score
+        - total_questions
+        - correct_answers
+        - time_spent
+      properties:
+        topic_name:
+          type: string
+          description: Name of the topic
+          example: "React Fundamentals"
+        average_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Average score for this topic
+          example: 90
+        total_questions:
+          type: integer
+          minimum: 0
+          description: Total questions attempted
+          example: 20
+        correct_answers:
+          type: integer
+          minimum: 0
+          description: Number of correct answers
+          example: 18
+        time_spent:
+          type: integer
+          minimum: 0
+          description: Time spent on this topic (minutes)
+          example: 45
+        performance_trend:
+          type: array
+          items:
+            type: number
+          description: Performance trend over time
+          example: [85, 88, 92, 90]
+
+    SpiderChartItem:
+      type: object
+      required:
+        - subject
+        - score
+        - full_mark
+      properties:
+        subject:
+          type: string
+          description: Topic name for spider chart
+          example: "React Fundamentals"
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Performance score
+          example: 90
+        full_mark:
+          type: integer
+          description: Maximum possible score
+          example: 100
+
+    TrendAnalytics:
+      type: object
+      required:
+        - trends
+        - summary
+      properties:
+        trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendData'
+          description: Performance trends over time
+        summary:
+          $ref: '#/components/schemas/TrendSummary'
+
+    TrendData:
+      type: object
+      required:
+        - date
+        - score
+        - time_spent
+        - accuracy
+        - topic
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date of the performance
+          example: "2024-01-15"
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Performance score
+          example: 85.5
+        time_spent:
+          type: integer
+          minimum: 0
+          description: Time spent (minutes)
+          example: 45
+        accuracy:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Accuracy percentage
+          example: 90
+        topic:
+          type: string
+          description: Topic name
+          example: "React"
+
+    TrendSummary:
+      type: object
+      required:
+        - total_sessions
+        - average_score
+        - improvement_rate
+        - best_performance
+        - worst_performance
+      properties:
+        total_sessions:
+          type: integer
+          minimum: 0
+          description: Total number of sessions
+          example: 10
+        average_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Average score across all sessions
+          example: 82.5
+        improvement_rate:
+          type: number
+          description: Percentage improvement over time
+          example: 15.2
+        best_performance:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Best performance score
+          example: 95
+        worst_performance:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Worst performance score
+          example: 65
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation Error"
+        message:
+          type: string
+          example: "Invalid input data"
+        details:
+          type: array
+          items:
+            type: string
+          example: ["User ID is required", "Time period must be valid"]
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Validation Error"
+            message: "Invalid input data"
+            details: ["User ID is required", "Time period must be valid"]
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            message: "Invalid or missing authentication token"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Not Found"
+            message: "Resource not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+
+tags:
+  - name: Analytics
+    description: User performance analytics and insights

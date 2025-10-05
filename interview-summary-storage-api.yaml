@@ -1,0 +1,425 @@
+openapi: 3.0.3
+info:
+  title: Interview Summary Storage API
+  description: |
+    API specification for storing interview summaries in the backend database.
+    This endpoint is called when users complete interviews and return to the lobby.
+    
+    ## When to Call This Endpoint
+    
+    This endpoint should be called in the following scenarios:
+    1. **When an interview ends** - Store the summary immediately after interview completion
+    2. **When "Back to Lobby" is pressed** - Ensure data is persisted before navigation
+    3. **Before session cleanup** - Guarantee data is saved before clearing session state
+    
+    ## Data Flow
+    
+    1. User completes interview → Interview summary is generated
+    2. User views summary screen → Data is ready for storage
+    3. User clicks "Back to Lobby" → This endpoint is called
+    4. Data is stored in backend database → Available for analytics
+    5. User returns to lobby → Session state is cleared
+    
+    ## Analytics Integration
+    
+    Once stored, this data becomes available to:
+    - Analytics dashboard endpoints
+    - Performance tracking systems
+    - User progress monitoring
+    - Skill assessment reports
+  version: 1.0.0
+  contact:
+    name: AI Interview Hub
+    email: support@aiinterviewhub.com
+
+servers:
+  - url: https://api.aiinterviewhub.com/v1
+    description: Production server
+  - url: https://staging-api.aiinterviewhub.com/v1
+    description: Staging server
+  - url: http://localhost/api
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /interview-sessions/{session_id}/summary:
+    post:
+      summary: Store Interview Summary in Database
+      description: |
+        Stores the complete interview summary and analytics data in the backend database.
+        This endpoint is critical for data persistence and analytics functionality.
+        
+        **When Called:**
+        - When user completes an interview
+        - When user clicks "Back to Lobby" from summary screen
+        - Before clearing session state
+        
+        **What It Stores:**
+        - Complete interview summary with scores
+        - Performance metrics and analytics data
+        - Question-by-question breakdown
+        - User progress and skill assessment
+        
+        **Backend Requirements:**
+        - Store data in persistent database
+        - Ensure data integrity and consistency
+        - Support analytics queries and reporting
+        - Handle concurrent storage requests
+      operationId: storeInterviewSummary
+      tags:
+        - Interview Storage
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique interview session identifier
+          example: "session-12345"
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication and data association
+          example: "user-67890"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewSummaryRequest'
+            example:
+              summary:
+                technical_score: 85
+                grammatical_score: 92
+                strong_points:
+                  - "Clear explanation of technical concepts"
+                  - "Good use of examples"
+                  - "Strong problem-solving approach"
+                weak_points:
+                  - "Could improve on time management"
+                  - "More specific examples needed"
+                  - "Work on explaining complex algorithms"
+                practice_points:
+                  - "Practice coding problems"
+                  - "Work on explaining complex algorithms"
+                  - "Review system design patterns"
+                contextual_relevant: true
+                off_topic_count: 0
+              topic_id: "topic-1"
+              total_questions: 5
+              correct_answers: 4
+              time_spent: 30
+              technical_score: 85.0
+              communication_score: 92.0
+              question_breakdown:
+                - question_id: "q_1"
+                  question_text: "Explain the difference between let and const in JavaScript"
+                  user_answer: "let allows reassignment, const does not"
+                  is_correct: true
+                  time_taken: 45
+                  difficulty_score: 7
+                  skill_tags: ["javascript", "variables", "es6"]
+                - question_id: "q_2"
+                  question_text: "What is the event loop in JavaScript?"
+                  user_answer: "The event loop handles asynchronous operations"
+                  is_correct: true
+                  time_taken: 60
+                  difficulty_score: 8
+                  skill_tags: ["javascript", "asynchronous", "event-loop"]
+                - question_id: "q_3"
+                  question_text: "How does React's virtual DOM work?"
+                  user_answer: "Virtual DOM is a JavaScript representation of the real DOM"
+                  is_correct: true
+                  time_taken: 90
+                  difficulty_score: 9
+                  skill_tags: ["react", "virtual-dom", "performance"]
+      responses:
+        '200':
+          description: |
+            Interview summary successfully stored in the database.
+            The data is now available for analytics and user dashboard.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewSummaryResponse'
+              example:
+                message: "Interview summary stored successfully"
+                session_id: "session-12345"
+                stored_at: "2024-01-15T10:30:00Z"
+                analytics_available: true
+        '400':
+          description: Bad request - Invalid or missing data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Validation Error"
+                message: "Missing required fields: technical_score, communication_score"
+                details: ["technical_score is required", "communication_score is required"]
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Unauthorized"
+                message: "Invalid or missing authentication token"
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Not Found"
+                message: "Interview session not found"
+        '409':
+          description: Conflict - Summary already exists for this session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Conflict"
+                message: "Interview summary already exists for this session"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Internal Server Error"
+                message: "Failed to store interview summary"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    InterviewSummaryRequest:
+      type: object
+      required:
+        - summary
+        - topic_id
+        - total_questions
+        - correct_answers
+        - time_spent
+        - technical_score
+        - communication_score
+      properties:
+        summary:
+          $ref: '#/components/schemas/InterviewSummary'
+        topic_id:
+          type: string
+          description: Topic ID of the interview
+          example: "topic-1"
+        total_questions:
+          type: integer
+          minimum: 0
+          description: Total number of questions in the interview
+          example: 5
+        correct_answers:
+          type: integer
+          minimum: 0
+          description: Number of correct answers
+          example: 4
+        time_spent:
+          type: integer
+          minimum: 0
+          description: Total time spent in the interview (minutes)
+          example: 30
+        technical_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Technical performance score
+          example: 85.0
+        communication_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Communication performance score
+          example: 92.0
+        question_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionBreakdown'
+          description: Performance breakdown by individual questions
+
+    InterviewSummary:
+      type: object
+      required:
+        - technical_score
+        - grammatical_score
+        - strong_points
+        - weak_points
+        - practice_points
+        - contextual_relevant
+        - off_topic_count
+      properties:
+        technical_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Technical performance score
+          example: 85
+        grammatical_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Communication and grammar score
+          example: 92
+        strong_points:
+          type: array
+          items:
+            type: string
+          description: Areas where the user performed well
+          example: ["Clear explanation of technical concepts", "Good use of examples"]
+        weak_points:
+          type: array
+          items:
+            type: string
+          description: Areas where the user needs improvement
+          example: ["Could improve on time management", "More specific examples needed"]
+        practice_points:
+          type: array
+          items:
+            type: string
+          description: Recommended practice areas
+          example: ["Practice coding problems", "Work on explaining complex algorithms"]
+        contextual_relevant:
+          type: boolean
+          description: Whether the responses were contextually relevant
+          example: true
+        off_topic_count:
+          type: integer
+          minimum: 0
+          description: Number of off-topic responses
+          example: 0
+
+    QuestionBreakdown:
+      type: object
+      required:
+        - question_id
+        - question_text
+        - user_answer
+        - is_correct
+        - time_taken
+        - difficulty_score
+      properties:
+        question_id:
+          type: string
+          description: Unique identifier for the question
+          example: "q_12345"
+        question_text:
+          type: string
+          description: The question text
+          example: "Explain the difference between let and const in JavaScript"
+        user_answer:
+          type: string
+          description: User's answer to the question
+          example: "let allows reassignment, const does not"
+        is_correct:
+          type: boolean
+          description: Whether the answer was correct
+          example: true
+        time_taken:
+          type: integer
+          minimum: 0
+          description: Time taken to answer (in seconds)
+          example: 45
+        difficulty_score:
+          type: number
+          minimum: 1
+          maximum: 10
+          description: Difficulty level of the question
+          example: 7
+        skill_tags:
+          type: array
+          items:
+            type: string
+          description: Skill tags associated with this question
+          example: ["javascript", "variables", "es6"]
+
+    InterviewSummaryResponse:
+      type: object
+      required:
+        - message
+        - session_id
+        - stored_at
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: "Interview summary stored successfully"
+        session_id:
+          type: string
+          description: The stored session ID
+          example: "session-12345"
+        stored_at:
+          type: string
+          format: date-time
+          description: Timestamp when the summary was stored
+          example: "2024-01-15T10:30:00Z"
+        analytics_available:
+          type: boolean
+          description: Whether the data is immediately available for analytics
+          example: true
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "Validation Error"
+        message:
+          type: string
+          description: Error message
+          example: "Invalid input data"
+        details:
+          type: array
+          items:
+            type: string
+          description: Additional error details
+          example: ["technical_score is required", "communication_score is required"]
+
+tags:
+  - name: Interview Storage
+    description: |
+      Endpoints for storing interview summaries in the backend database.
+      These endpoints ensure data persistence and enable analytics functionality.
+      
+      ## Implementation Notes
+      
+      **Backend Requirements:**
+      - Store data in persistent database (PostgreSQL, MySQL, etc.)
+      - Ensure ACID compliance for data integrity
+      - Support concurrent requests from multiple users
+      - Implement proper indexing for analytics queries
+      
+      **Database Schema Considerations:**
+      - Primary key on session_id for fast lookups
+      - Index on user_id for user-specific queries
+      - Index on topic_id for topic-based analytics
+      - JSON/JSONB column for question_breakdown for flexible querying
+      - Timestamp columns for time-based analytics
+      
+      **Analytics Integration:**
+      - Data should be immediately available for analytics endpoints
+      - Consider implementing real-time updates for dashboards
+      - Support aggregation queries for performance metrics
+      - Enable filtering by date range, topic, and user

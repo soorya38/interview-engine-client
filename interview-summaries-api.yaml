@@ -1,0 +1,664 @@
+openapi: 3.0.3
+info:
+  title: Interview Summaries API
+  description: |
+    API specification for retrieving interview summaries and session history.
+    This endpoint powers the Interview Summaries page where users can view
+    their past interview performance and detailed feedback.
+    
+    ## Purpose
+    
+    This API enables users to:
+    - View their complete interview history
+    - Access detailed performance summaries
+    - Track progress over time
+    - Review specific interview sessions
+    - Analyze their strengths and weaknesses
+    
+    ## Data Flow
+    
+    1. User completes interview → Summary stored via storage API
+    2. User navigates to Summaries page → This API is called
+    3. Backend retrieves user's interview history → Returns formatted data
+    4. Frontend displays summaries → User can review performance
+    5. User clicks "View Details" → Detailed session data retrieved
+    
+    ## Performance Considerations
+    
+    - Implement pagination for large interview histories
+    - Use efficient database queries with proper indexing
+    - Cache frequently accessed data
+    - Support filtering and sorting options
+    - Optimize for mobile and desktop experiences
+    
+    ## Security
+    
+    - All endpoints require user authentication
+    - Users can only access their own interview data
+    - Implement rate limiting to prevent abuse
+    - Log all access for audit purposes
+  version: 1.0.0
+  contact:
+    name: AI Interview Hub
+    email: support@aiinterviewhub.com
+
+servers:
+  - url: https://api.aiinterviewhub.com/v1
+    description: Production server
+  - url: https://staging-api.aiinterviewhub.com/v1
+    description: Staging server
+  - url: http://localhost/api
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /interview-sessions:
+    get:
+      summary: Get User Interview Sessions
+      description: |
+        Retrieves a paginated list of interview sessions for the authenticated user.
+        This endpoint powers the main Interview Summaries page.
+        
+        **Use Cases:**
+        - Display user's interview history
+        - Show performance overview
+        - Enable navigation to detailed views
+        - Support filtering and sorting
+        
+        **Response Data:**
+        - Session metadata (dates, duration, scores)
+        - Performance indicators
+        - Topic information
+        - Status and completion details
+        
+        **Pagination:**
+        - Supports limit/offset pagination
+        - Default limit of 20 sessions
+        - Maximum limit of 100 sessions
+        - Includes total count for UI pagination
+      operationId: getInterviewSessions
+      tags:
+        - Interview Summaries
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication and data filtering
+          example: "user-67890"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of sessions to return
+          example: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of sessions to skip
+          example: 0
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, completed, abandoned]
+          description: Filter by session status
+          example: "completed"
+        - name: topic_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by topic ID
+          example: "topic-1"
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter sessions from this date (YYYY-MM-DD)
+          example: "2024-01-01"
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter sessions to this date (YYYY-MM-DD)
+          example: "2024-12-31"
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [started_at, ended_at, technical_score, duration_minutes]
+            default: "started_at"
+          description: Field to sort by
+          example: "started_at"
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: "desc"
+          description: Sort order
+          example: "desc"
+      responses:
+        '200':
+          description: |
+            Successfully retrieved interview sessions.
+            Returns paginated list of sessions with metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewSessionsResponse'
+              example:
+                sessions:
+                  - session_id: "session-12345"
+                    topic_id: "topic-1"
+                    topic_name: "JavaScript Fundamentals"
+                    started_at: "2024-01-15T10:00:00Z"
+                    ended_at: "2024-01-15T10:30:00Z"
+                    duration_minutes: 30
+                    technical_score: 85
+                    grammatical_score: 92
+                    status: "completed"
+                  - session_id: "session-12346"
+                    topic_id: "topic-2"
+                    topic_name: "React Advanced Patterns"
+                    started_at: "2024-01-14T14:00:00Z"
+                    ended_at: "2024-01-14T14:45:00Z"
+                    duration_minutes: 45
+                    technical_score: 78
+                    grammatical_score: 88
+                    status: "completed"
+                pagination:
+                  total: 25
+                  limit: 20
+                  offset: 0
+                  has_more: true
+                summary:
+                  total_sessions: 25
+                  completed_sessions: 23
+                  average_score: 81.5
+                  high_scores: 15
+        '400':
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Validation Error"
+                message: "Invalid limit parameter"
+                details: ["limit must be between 1 and 100"]
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Unauthorized"
+                message: "Invalid or missing authentication token"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Internal Server Error"
+                message: "Failed to retrieve interview sessions"
+
+  /interview-sessions/{session_id}:
+    get:
+      summary: Get Detailed Interview Session
+      description: |
+        Retrieves detailed information about a specific interview session.
+        This endpoint is called when users click "View Details" on a session.
+        
+        **Use Cases:**
+        - Show detailed interview summary
+        - Display full conversation history
+        - Provide comprehensive performance analysis
+        - Enable detailed review and learning
+        
+        **Response Data:**
+        - Complete interview summary with scores
+        - Full conversation transcript
+        - Performance breakdown
+        - Recommendations and feedback
+        - Session metadata and timing
+        
+        **Data Privacy:**
+        - Users can only access their own sessions
+        - Sensitive data is properly protected
+        - Audit logging for security compliance
+      operationId: getInterviewSessionDetail
+      tags:
+        - Interview Summaries
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique interview session identifier
+          example: "session-12345"
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication and authorization
+          example: "user-67890"
+      responses:
+        '200':
+          description: |
+            Successfully retrieved detailed interview session.
+            Returns complete session data including summary and conversation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewSessionDetail'
+              example:
+                session_id: "session-12345"
+                topic_id: "topic-1"
+                topic_name: "JavaScript Fundamentals"
+                started_at: "2024-01-15T10:00:00Z"
+                ended_at: "2024-01-15T10:30:00Z"
+                duration_minutes: 30
+                conversation:
+                  - sender: "interviewer"
+                    text: "Welcome to your JavaScript interview. Let's start with a basic question: What is the difference between let and const?"
+                    timestamp: "2024-01-15T10:00:00Z"
+                  - sender: "user"
+                    text: "let allows reassignment while const does not. const creates a constant reference."
+                    timestamp: "2024-01-15T10:00:15Z"
+                  - sender: "interviewer"
+                    text: "Excellent! Now, can you explain how closures work in JavaScript?"
+                    timestamp: "2024-01-15T10:00:30Z"
+                summary:
+                  technical_score: 85
+                  grammatical_score: 92
+                  strong_points:
+                    - "Clear explanation of technical concepts"
+                    - "Good use of examples"
+                    - "Strong problem-solving approach"
+                  weak_points:
+                    - "Could improve on time management"
+                    - "More specific examples needed"
+                  practice_points:
+                    - "Practice coding problems"
+                    - "Work on explaining complex algorithms"
+                  contextual_relevant: true
+                  off_topic_count: 0
+                status: "completed"
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Unauthorized"
+                message: "Invalid or missing authentication token"
+        '403':
+          description: Forbidden - User cannot access this session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Forbidden"
+                message: "You can only access your own interview sessions"
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Not Found"
+                message: "Interview session not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Internal Server Error"
+                message: "Failed to retrieve interview session"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    InterviewSessionsResponse:
+      type: object
+      required:
+        - sessions
+        - pagination
+        - summary
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InterviewSession'
+          description: List of interview sessions
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+        summary:
+          $ref: '#/components/schemas/SessionsSummary'
+
+    InterviewSession:
+      type: object
+      required:
+        - session_id
+        - topic_id
+        - topic_name
+        - started_at
+        - status
+      properties:
+        session_id:
+          type: string
+          description: Unique session identifier
+          example: "session-12345"
+        topic_id:
+          type: string
+          description: Topic identifier
+          example: "topic-1"
+        topic_name:
+          type: string
+          description: Human-readable topic name
+          example: "JavaScript Fundamentals"
+        started_at:
+          type: string
+          format: date-time
+          description: Session start timestamp
+          example: "2024-01-15T10:00:00Z"
+        ended_at:
+          type: string
+          format: date-time
+          description: Session end timestamp (null if not completed)
+          example: "2024-01-15T10:30:00Z"
+        duration_minutes:
+          type: integer
+          minimum: 0
+          description: Session duration in minutes
+          example: 30
+        technical_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Technical performance score
+          example: 85
+        grammatical_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Communication and grammar score
+          example: 92
+        status:
+          type: string
+          enum: [active, completed, abandoned]
+          description: Session status
+          example: "completed"
+
+    InterviewSessionDetail:
+      type: object
+      required:
+        - session_id
+        - topic_id
+        - topic_name
+        - started_at
+        - conversation
+        - status
+      properties:
+        session_id:
+          type: string
+          description: Unique session identifier
+          example: "session-12345"
+        topic_id:
+          type: string
+          description: Topic identifier
+          example: "topic-1"
+        topic_name:
+          type: string
+          description: Human-readable topic name
+          example: "JavaScript Fundamentals"
+        started_at:
+          type: string
+          format: date-time
+          description: Session start timestamp
+          example: "2024-01-15T10:00:00Z"
+        ended_at:
+          type: string
+          format: date-time
+          description: Session end timestamp
+          example: "2024-01-15T10:30:00Z"
+        duration_minutes:
+          type: integer
+          minimum: 0
+          description: Session duration in minutes
+          example: 30
+        conversation:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationMessage'
+          description: Complete conversation transcript
+        summary:
+          $ref: '#/components/schemas/InterviewSummary'
+        status:
+          type: string
+          enum: [active, completed, abandoned]
+          description: Session status
+          example: "completed"
+
+    ConversationMessage:
+      type: object
+      required:
+        - sender
+        - text
+        - timestamp
+      properties:
+        sender:
+          type: string
+          enum: [user, interviewer]
+          description: Message sender
+          example: "user"
+        text:
+          type: string
+          description: Message content
+          example: "let allows reassignment while const does not"
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+          example: "2024-01-15T10:00:15Z"
+
+    InterviewSummary:
+      type: object
+      required:
+        - technical_score
+        - grammatical_score
+        - strong_points
+        - weak_points
+        - practice_points
+        - contextual_relevant
+        - off_topic_count
+      properties:
+        technical_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Technical performance score
+          example: 85
+        grammatical_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Communication and grammar score
+          example: 92
+        strong_points:
+          type: array
+          items:
+            type: string
+          description: Areas where the user performed well
+          example: ["Clear explanation of technical concepts", "Good use of examples"]
+        weak_points:
+          type: array
+          items:
+            type: string
+          description: Areas where the user needs improvement
+          example: ["Could improve on time management", "More specific examples needed"]
+        practice_points:
+          type: array
+          items:
+            type: string
+          description: Recommended practice areas
+          example: ["Practice coding problems", "Work on explaining complex algorithms"]
+        contextual_relevant:
+          type: boolean
+          description: Whether the responses were contextually relevant
+          example: true
+        off_topic_count:
+          type: integer
+          minimum: 0
+          description: Number of off-topic responses
+          example: 0
+
+    PaginationInfo:
+      type: object
+      required:
+        - total
+        - limit
+        - offset
+        - has_more
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of sessions
+          example: 25
+        limit:
+          type: integer
+          minimum: 1
+          description: Number of sessions per page
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          description: Number of sessions skipped
+          example: 0
+        has_more:
+          type: boolean
+          description: Whether there are more sessions available
+          example: true
+
+    SessionsSummary:
+      type: object
+      required:
+        - total_sessions
+        - completed_sessions
+        - average_score
+        - high_scores
+      properties:
+        total_sessions:
+          type: integer
+          minimum: 0
+          description: Total number of sessions
+          example: 25
+        completed_sessions:
+          type: integer
+          minimum: 0
+          description: Number of completed sessions
+          example: 23
+        average_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Average technical score across all sessions
+          example: 81.5
+        high_scores:
+          type: integer
+          minimum: 0
+          description: Number of sessions with score >= 80
+          example: 15
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "Validation Error"
+        message:
+          type: string
+          description: Error message
+          example: "Invalid input data"
+        details:
+          type: array
+          items:
+            type: string
+          description: Additional error details
+          example: ["limit must be between 1 and 100"]
+
+tags:
+  - name: Interview Summaries
+    description: |
+      Endpoints for retrieving interview summaries and session history.
+      These endpoints power the Interview Summaries page and provide
+      comprehensive access to user performance data.
+      
+      ## Implementation Notes
+      
+      **Backend Requirements:**
+      - Implement efficient database queries with proper indexing
+      - Support pagination for large datasets
+      - Ensure data privacy and security
+      - Optimize for performance and scalability
+      
+      **Database Schema Considerations:**
+      - Index on user_id for fast user-specific queries
+      - Index on started_at for time-based sorting
+      - Index on topic_id for topic-based filtering
+      - Consider partitioning by date for large datasets
+      - Use JSON/JSONB for flexible conversation storage
+      
+      **Performance Optimization:**
+      - Implement query result caching
+      - Use database connection pooling
+      - Consider read replicas for analytics queries
+      - Implement proper pagination to prevent large result sets
+      - Use database views for complex aggregations
+      
+      **Security Considerations:**
+      - Validate user ownership of sessions
+      - Implement rate limiting
+      - Log all access for audit purposes
+      - Sanitize all user inputs
+      - Use parameterized queries to prevent SQL injection

@@ -8,7 +8,7 @@ import { oidcConfig } from "@/lib/oidcConfig";
 import Login from "./pages/Login";
 import Callback from "./pages/Callback";
 import Dashboard from "./pages/Dashboard";
-import Analytics from "./pages/Analytics";
+import InterviewSummaries from "./pages/InterviewSummaries";
 import TestPractice from "./pages/TestPractice";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -36,10 +36,10 @@ const App = () => (
               }
             />
             <Route
-              path="/analytics"
+              path="/summaries"
               element={
                 <ProtectedRoute>
-                  <Analytics />
+                  <InterviewSummaries />
                 </ProtectedRoute>
               }
             />

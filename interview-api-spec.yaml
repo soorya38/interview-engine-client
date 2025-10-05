@@ -1,0 +1,1513 @@
+openapi: 3.0.3
+info:
+  title: Interview Practice API
+  description: API for managing interview practice sessions, topics, questions, and AI-powered interview simulations
+  version: 1.0.0
+  contact:
+    name: AI Interview Hub
+    email: support@aiinterviewhub.com
+servers:
+  - url: https://api.aiinterviewhub.com/v1
+    description: Production server
+  - url: https://staging-api.aiinterviewhub.com/v1
+    description: Staging server
+  - url: http://localhost/api
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /topics:
+    get:
+      summary: Get all topics
+      description: Retrieve all available interview topics for the user
+      operationId: getTopics
+      tags:
+        - Topics
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+      responses:
+        '200':
+          description: Topics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+              example:
+                - ID: "topic-1"
+                  Topic: "JavaScript Fundamentals"
+                - ID: "topic-2"
+                  Topic: "React Development"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create new topic
+      description: Create a new interview topic
+      operationId: createTopic
+      tags:
+        - Topics
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicCreateRequest'
+            example:
+              topic: "Python Programming"
+      responses:
+        '201':
+          description: Topic created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /questions:
+    get:
+      summary: Get all questions
+      description: Retrieve all questions for the user, optionally filtered by topic
+      operationId: getQuestions
+      tags:
+        - Questions
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: topic_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter questions by topic ID
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter questions by tags (comma-separated)
+      responses:
+        '200':
+          description: Questions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create new question
+      description: Create a new interview question with optional tags
+      operationId: createQuestion
+      tags:
+        - Questions
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionCreateRequest'
+            example:
+              topic_id: "topic-1"
+              question: "Explain the difference between let, const, and var in JavaScript"
+              tags: ["javascript", "variables", "scope"]
+              time_minutes: 15
+      responses:
+        '201':
+          description: Question created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /questions/{questionId}:
+    get:
+      summary: Get specific question
+      description: Retrieve a specific question by ID
+      operationId: getQuestion
+      tags:
+        - Questions
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Question ID
+      responses:
+        '200':
+          description: Question retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update question
+      description: Update a specific question
+      operationId: updateQuestion
+      tags:
+        - Questions
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Question ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionUpdateRequest'
+      responses:
+        '200':
+          description: Question updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete question
+      description: Delete a specific question
+      operationId: deleteQuestion
+      tags:
+        - Questions
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Question ID
+      responses:
+        '204':
+          description: Question deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /interview/start:
+    post:
+      summary: Start interview session
+      description: Start a new AI-powered interview session
+      operationId: startInterview
+      tags:
+        - Interview
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: X-Topic-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Topic ID for the interview
+      responses:
+        '200':
+          description: Interview session started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewStartResponse'
+              example:
+                session_id: "session-123"
+                initial_question: "Tell me about yourself and your experience with JavaScript."
+                question_time_limit: 15
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /interview/{sessionId}:
+    post:
+      summary: Submit interview response
+      description: Submit a response to the current interview question
+      operationId: submitInterviewResponse
+      tags:
+        - Interview
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Interview session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewResponseRequest'
+            example:
+              text: "I have 5 years of experience with JavaScript, including ES6+ features, async programming, and modern frameworks like React."
+      responses:
+        '200':
+          description: Response processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewResponse'
+              example:
+                response: "That's great! Can you explain the difference between synchronous and asynchronous programming in JavaScript?"
+                session_ended: false
+                question_time_limit: 10
+                summary: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /interview/end/{sessionId}:
+    post:
+      summary: End interview session
+      description: End the current interview session and get final summary
+      operationId: endInterview
+      tags:
+        - Interview
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Interview session ID
+      responses:
+        '200':
+          description: Interview ended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewSummary'
+              example:
+                summary:
+                  technical_score: 85
+                  grammatical_score: 92
+                  strong_points:
+                    - "Clear explanation of technical concepts"
+                    - "Good use of examples"
+                  weak_points:
+                    - "Could improve on time management"
+                    - "More specific examples needed"
+                  practice_points:
+                    - "Practice coding problems"
+                    - "Work on explaining complex algorithms"
+                  contextual_relevant: true
+                  off_topic_count: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /interview/sessions:
+    get:
+      summary: Get interview sessions
+      description: Retrieve all interview sessions for the user
+      operationId: getInterviewSessions
+      tags:
+        - Interview
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+          description: Number of sessions to retrieve
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Number of sessions to skip
+      responses:
+        '200':
+          description: Interview sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InterviewSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /interview/sessions/{sessionId}:
+    get:
+      summary: Get interview session details
+      description: Retrieve detailed information about a specific interview session
+      operationId: getInterviewSession
+      tags:
+        - Interview
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Interview session ID
+      responses:
+        '200':
+          description: Interview session details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewSessionDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Topic:
+      type: object
+      properties:
+        ID:
+          type: string
+          example: "topic-1"
+        Topic:
+          type: string
+          example: "JavaScript Fundamentals"
+      required:
+        - ID
+        - Topic
+
+    TopicCreateRequest:
+      type: object
+      properties:
+        topic:
+          type: string
+          example: "Python Programming"
+      required:
+        - topic
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "question-1"
+        topic_id:
+          type: string
+          example: "topic-1"
+        question:
+          type: string
+          example: "Explain the difference between let, const, and var in JavaScript"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["javascript", "variables", "scope"]
+        time_minutes:
+          type: integer
+          minimum: 1
+          maximum: 120
+          nullable: true
+          example: 15
+          description: "Time limit in minutes for answering this question"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+      required:
+        - id
+        - topic_id
+        - question
+        - tags
+
+    QuestionCreateRequest:
+      type: object
+      properties:
+        topic_id:
+          type: string
+          example: "topic-1"
+        question:
+          type: string
+          example: "Explain the difference between let, const, and var in JavaScript"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["javascript", "variables", "scope"]
+        time_minutes:
+          type: integer
+          minimum: 1
+          maximum: 120
+          nullable: true
+          example: 15
+          description: "Time limit in minutes for answering this question"
+      required:
+        - topic_id
+        - question
+
+    QuestionUpdateRequest:
+      type: object
+      properties:
+        topic_id:
+          type: string
+          example: "topic-1"
+        question:
+          type: string
+          example: "Explain the difference between let, const, and var in JavaScript"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["javascript", "variables", "scope"]
+        time_minutes:
+          type: integer
+          minimum: 1
+          maximum: 120
+          nullable: true
+          example: 15
+          description: "Time limit in minutes for answering this question"
+
+    InterviewStartResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          example: "session-123"
+        initial_question:
+          type: string
+          example: "Tell me about yourself and your experience with JavaScript."
+        question_time_limit:
+          type: integer
+          nullable: true
+          example: 15
+          description: "Time limit in minutes for the current question"
+      required:
+        - session_id
+        - initial_question
+
+    InterviewResponseRequest:
+      type: object
+      properties:
+        text:
+          type: string
+          example: "I have 5 years of experience with JavaScript, including ES6+ features, async programming, and modern frameworks like React."
+      required:
+        - text
+
+    InterviewResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          example: "That's great! Can you explain the difference between synchronous and asynchronous programming in JavaScript?"
+        session_ended:
+          type: boolean
+          example: false
+        question_time_limit:
+          type: integer
+          nullable: true
+          example: 10
+          description: "Time limit in minutes for the next question"
+        summary:
+          $ref: '#/components/schemas/InterviewSummary'
+          nullable: true
+      required:
+        - response
+        - session_ended
+
+    InterviewSummary:
+      type: object
+      properties:
+        technical_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 85
+        grammatical_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 92
+        strong_points:
+          type: array
+          items:
+            type: string
+          example: ["Clear explanation of technical concepts", "Good use of examples"]
+        weak_points:
+          type: array
+          items:
+            type: string
+          example: ["Could improve on time management", "More specific examples needed"]
+        practice_points:
+          type: array
+          items:
+            type: string
+          example: ["Practice coding problems", "Work on explaining complex algorithms"]
+        contextual_relevant:
+          type: boolean
+          example: true
+        off_topic_count:
+          type: integer
+          minimum: 0
+          example: 0
+      required:
+        - technical_score
+        - grammatical_score
+        - strong_points
+        - weak_points
+        - practice_points
+        - contextual_relevant
+        - off_topic_count
+
+    InterviewSession:
+      type: object
+      properties:
+        session_id:
+          type: string
+          example: "session-123"
+        topic_id:
+          type: string
+          example: "topic-1"
+        topic_name:
+          type: string
+          example: "JavaScript Fundamentals"
+        started_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T11:00:00Z"
+        duration_minutes:
+          type: integer
+          example: 30
+        technical_score:
+          type: integer
+          nullable: true
+          example: 85
+        grammatical_score:
+          type: integer
+          nullable: true
+          example: 92
+        status:
+          type: string
+          enum: [active, completed, abandoned]
+          example: "completed"
+      required:
+        - session_id
+        - topic_id
+        - topic_name
+        - started_at
+        - status
+
+    InterviewSessionDetail:
+      type: object
+      properties:
+        session_id:
+          type: string
+          example: "session-123"
+        topic_id:
+          type: string
+          example: "topic-1"
+        topic_name:
+          type: string
+          example: "JavaScript Fundamentals"
+        started_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T11:00:00Z"
+        duration_minutes:
+          type: integer
+          example: 30
+        conversation:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationMessage'
+        summary:
+          $ref: '#/components/schemas/InterviewSummary'
+          nullable: true
+        status:
+          type: string
+          enum: [active, completed, abandoned]
+          example: "completed"
+      required:
+        - session_id
+        - topic_id
+        - topic_name
+        - started_at
+        - conversation
+        - status
+
+    ConversationMessage:
+      type: object
+      properties:
+        sender:
+          type: string
+          enum: [user, interviewer]
+          example: "user"
+        text:
+          type: string
+          example: "I have 5 years of experience with JavaScript"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:35:00Z"
+      required:
+        - sender
+        - text
+        - timestamp
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation Error"
+        message:
+          type: string
+          example: "Invalid input data"
+        details:
+          type: array
+          items:
+            type: string
+          example: ["Topic ID is required", "Question text cannot be empty"]
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Validation Error"
+            message: "Invalid input data"
+            details: ["Topic ID is required", "Question text cannot be empty"]
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            message: "Invalid or missing authentication token"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Not Found"
+            message: "Resource not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+
+  /interview-sessions/{session_id}/summary:
+    post:
+      summary: Store interview summary
+      description: |
+        Stores the interview summary and analytics data in the database. This endpoint should be called:
+        - When an interview ends and the user views the summary
+        - When the user clicks "Back to Lobby" from the summary screen
+        - To ensure interview data is persisted for analytics and future reference
+        
+        The endpoint stores comprehensive interview data including performance metrics, 
+        question breakdowns, and analytics data for the user's dashboard.
+      tags:
+        - Interview
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Interview session ID
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - summary
+                - topic_id
+                - total_questions
+                - correct_answers
+                - time_spent
+                - technical_score
+                - communication_score
+              properties:
+                summary:
+                  $ref: '#/components/schemas/InterviewSummary'
+                topic_id:
+                  type: string
+                  description: Topic ID of the interview
+                total_questions:
+                  type: integer
+                  minimum: 0
+                  description: Total number of questions in the interview
+                correct_answers:
+                  type: integer
+                  minimum: 0
+                  description: Number of correct answers
+                time_spent:
+                  type: integer
+                  minimum: 0
+                  description: Total time spent in the interview (minutes)
+                technical_score:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                  description: Technical performance score
+                communication_score:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                  description: Communication performance score
+                question_breakdown:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/QuestionBreakdown'
+                  description: Performance breakdown by individual questions
+            example:
+              summary:
+                technical_score: 85
+                grammatical_score: 92
+                strong_points:
+                  - "Clear explanation of technical concepts"
+                  - "Good use of examples"
+                weak_points:
+                  - "Could improve on time management"
+                  - "More specific examples needed"
+                practice_points:
+                  - "Practice coding problems"
+                  - "Work on explaining complex algorithms"
+                contextual_relevant: true
+                off_topic_count: 0
+              topic_id: "topic-1"
+              total_questions: 5
+              correct_answers: 4
+              time_spent: 30
+              technical_score: 85.0
+              communication_score: 92.0
+              question_breakdown:
+                - question_id: "q_1"
+                  question_text: "Explain the difference between let and const in JavaScript"
+                  user_answer: "let allows reassignment, const does not"
+                  is_correct: true
+                  time_taken: 45
+                  difficulty_score: 7
+                  skill_tags: ["javascript", "variables", "es6"]
+                - question_id: "q_2"
+                  question_text: "What is the event loop in JavaScript?"
+                  user_answer: "The event loop handles asynchronous operations"
+                  is_correct: true
+                  time_taken: 60
+                  difficulty_score: 8
+                  skill_tags: ["javascript", "asynchronous", "event-loop"]
+      responses:
+        '200':
+          description: |
+            Interview summary stored successfully in the database. 
+            The data is now available for analytics and can be retrieved 
+            by the user's dashboard and analytics endpoints.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Interview summary stored successfully"
+                  session_id:
+                    type: string
+                    description: The stored session ID
+                  stored_at:
+                    type: string
+                    format: date-time
+                    description: Timestamp when the summary was stored
+                    example: "2024-01-15T10:30:00Z"
+              example:
+                message: "Interview summary stored successfully"
+                session_id: "session-123"
+                stored_at: "2024-01-15T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /interview-sessions:
+    get:
+      summary: Get user's interview sessions
+      description: Retrieves all interview sessions for a user with optional filtering
+      tags:
+        - Interview
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication
+        - name: topic_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by specific topic
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter interviews from this date
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter interviews until this date
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of sessions to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of sessions to skip
+      responses:
+        '200':
+          description: Interview sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StoredInterviewSummary'
+                    description: List of interview sessions
+                  total_count:
+                    type: integer
+                    description: Total number of sessions matching the criteria
+                  has_more:
+                    type: boolean
+                    description: Whether there are more sessions available
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/skills:
+    get:
+      summary: Get user skill analytics
+      description: Retrieves comprehensive skill analytics for a user based on stored interview summaries
+      tags:
+        - Analytics
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication
+        - name: time_period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all]
+            default: all
+          description: Time period for analytics calculation
+      responses:
+        '200':
+          description: Skill analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skill_radar:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SkillRadarItem'
+                    description: Data for radar chart visualization
+                  strong_topics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TopicAnalytics'
+                    description: Topics where user performs well
+                  weak_topics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TopicAnalytics'
+                    description: Topics where user needs improvement
+                  overall_stats:
+                    $ref: '#/components/schemas/OverallStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/performance:
+    get:
+      summary: Get user performance analytics
+      description: Retrieves detailed performance analytics including trends, improvement areas, and recommendations based on stored interview data
+      tags:
+        - Analytics
+      parameters:
+        - name: X-User-ID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User ID for authentication
+        - name: time_period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all]
+            default: month
+          description: Time period for analytics
+        - name: topic_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter analytics by specific topic
+        - name: skill_tags
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Filter by specific skill tags
+          example: ["javascript", "react", "algorithms"]
+      responses:
+        '200':
+          description: Performance analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  performance_trend:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PerformanceTrend'
+                    description: Performance trends over time
+                  topic_breakdown:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TopicBreakdown'
+                    description: Performance breakdown by topic
+                  improvement_suggestions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ImprovementSuggestion'
+                    description: Personalized improvement suggestions
+                  time_analysis:
+                    $ref: '#/components/schemas/TimeAnalysis'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    SkillRadarItem:
+      type: object
+      required:
+        - subject
+        - score
+        - full_mark
+      properties:
+        subject:
+          type: string
+          description: Skill category name
+          example: "Algorithms"
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: User's score in this skill
+          example: 92
+        full_mark:
+          type: integer
+          description: Maximum possible score
+          example: 100
+
+    TopicAnalytics:
+      type: object
+      required:
+        - name
+        - score
+      properties:
+        name:
+          type: string
+          description: Topic name
+          example: "JavaScript ES6+"
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Performance score for this topic
+          example: 95
+        questions:
+          type: string
+          description: Questions answered correctly vs total
+          example: "19/20"
+        tip:
+          type: string
+          description: Improvement tip (for weak topics)
+          example: "Review distributed systems patterns"
+
+    OverallStats:
+      type: object
+      required:
+        - total_interviews
+        - average_score
+        - improvement_rate
+        - strongest_skill
+        - weakest_skill
+      properties:
+        total_interviews:
+          type: integer
+          minimum: 0
+          description: Total number of interviews completed
+          example: 25
+        average_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Average score across all interviews
+          example: 87.5
+        improvement_rate:
+          type: number
+          description: Percentage improvement over time
+          example: 15.2
+        strongest_skill:
+          type: string
+          description: User's strongest skill area
+          example: "JavaScript"
+        weakest_skill:
+          type: string
+          description: User's weakest skill area
+          example: "System Design"
+
+    PerformanceTrend:
+      type: object
+      required:
+        - date
+        - score
+        - topic
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date of the performance measurement
+          example: "2024-01-15"
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Score achieved on this date
+          example: 85.5
+        topic:
+          type: string
+          description: Topic of the interview
+          example: "React"
+
+    TopicBreakdown:
+      type: object
+      required:
+        - topic_id
+        - topic_name
+        - total_questions
+        - correct_answers
+        - average_score
+        - time_spent
+      properties:
+        topic_id:
+          type: string
+          description: Unique identifier for the topic
+          example: "react-fundamentals"
+        topic_name:
+          type: string
+          description: Human-readable topic name
+          example: "React Fundamentals"
+        total_questions:
+          type: integer
+          minimum: 0
+          description: Total questions attempted in this topic
+          example: 45
+        correct_answers:
+          type: integer
+          minimum: 0
+          description: Number of correct answers
+          example: 38
+        average_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Average score for this topic
+          example: 84.4
+        time_spent:
+          type: integer
+          minimum: 0
+          description: Total time spent on this topic (in minutes)
+          example: 180
+
+    ImprovementSuggestion:
+      type: object
+      required:
+        - category
+        - title
+        - description
+        - priority
+      properties:
+        category:
+          type: string
+          description: Category of the suggestion
+          example: "Study Material"
+        title:
+          type: string
+          description: Suggestion title
+          example: "Review React Hooks Patterns"
+        description:
+          type: string
+          description: Detailed suggestion description
+          example: "Focus on useEffect dependencies and custom hooks"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          description: Priority level of the suggestion
+          example: "high"
+        resources:
+          type: array
+          items:
+            type: string
+          description: Recommended resources
+          example: ["React Hooks Documentation", "Custom Hooks Tutorial"]
+
+    TimeAnalysis:
+      type: object
+      required:
+        - average_response_time
+        - fastest_topic
+        - slowest_topic
+        - time_improvement
+      properties:
+        average_response_time:
+          type: number
+          minimum: 0
+          description: Average time to answer questions (in seconds)
+          example: 45.2
+        fastest_topic:
+          type: string
+          description: Topic where user answers fastest
+          example: "JavaScript"
+        slowest_topic:
+          type: string
+          description: Topic where user takes most time
+          example: "System Design"
+        time_improvement:
+          type: number
+          description: Percentage improvement in response time
+          example: 12.5
+
+    QuestionBreakdown:
+      type: object
+      required:
+        - question_id
+        - question_text
+        - user_answer
+        - is_correct
+        - time_taken
+        - difficulty_score
+      properties:
+        question_id:
+          type: string
+          description: Unique identifier for the question
+          example: "q_12345"
+        question_text:
+          type: string
+          description: The question text
+          example: "Explain the difference between let and const in JavaScript"
+        user_answer:
+          type: string
+          description: User's answer to the question
+          example: "let allows reassignment, const does not"
+        is_correct:
+          type: boolean
+          description: Whether the answer was correct
+          example: true
+        time_taken:
+          type: integer
+          minimum: 0
+          description: Time taken to answer (in seconds)
+          example: 45
+        difficulty_score:
+          type: number
+          minimum: 1
+          maximum: 10
+          description: Difficulty level of the question
+          example: 7
+        skill_tags:
+          type: array
+          items:
+            type: string
+          description: Skill tags associated with this question
+          example: ["javascript", "variables", "es6"]
+
+    StoredInterviewSummary:
+      type: object
+      required:
+        - session_id
+        - user_id
+        - topic_id
+        - summary
+        - total_questions
+        - correct_answers
+        - time_spent
+        - technical_score
+        - communication_score
+        - created_at
+      properties:
+        session_id:
+          type: string
+          description: Unique session identifier
+          example: "session_12345"
+        user_id:
+          type: string
+          description: User who completed the interview
+          example: "user_67890"
+        topic_id:
+          type: string
+          description: Topic of the interview
+          example: "javascript-fundamentals"
+        summary:
+          $ref: '#/components/schemas/InterviewSummary'
+        total_questions:
+          type: integer
+          minimum: 0
+          description: Total number of questions
+          example: 10
+        correct_answers:
+          type: integer
+          minimum: 0
+          description: Number of correct answers
+          example: 8
+        time_spent:
+          type: integer
+          minimum: 0
+          description: Total time spent (minutes)
+          example: 25
+        technical_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Technical performance score
+          example: 85.5
+        communication_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Communication performance score
+          example: 78.2
+        question_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionBreakdown'
+          description: Detailed breakdown of each question
+        created_at:
+          type: string
+          format: date-time
+          description: When the interview was completed
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: When the record was last updated
+          example: "2024-01-15T10:30:00Z"
+
+tags:
+  - name: Topics
+    description: Interview topic management
+  - name: Questions
+    description: Interview question management with tags
+  - name: Interview
+    description: AI-powered interview sessions and analysis
+  - name: Analytics
+    description: User performance analytics and insights
