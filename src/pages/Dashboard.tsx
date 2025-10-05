@@ -1,80 +1,27 @@
-import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import BrutalistCard from '@/components/BrutalistCard';
 import BrutalistButton from '@/components/BrutalistButton';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, FileText, Clock, TrendingUp } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    interviewsTaken: 12,
-    avgScore: 87,
-    upcomingSlots: 3,
-    totalQuestions: 240,
-  });
-
-  const recentInterviews = [
-    { id: 1, title: 'JavaScript Fundamentals', date: '2025-10-01', status: 'completed', score: 92 },
-    { id: 2, title: 'React Advanced Patterns', date: '2025-09-28', status: 'completed', score: 85 },
-    { id: 3, title: 'System Design Basics', date: '2025-09-25', status: 'completed', score: 78 },
-    { id: 4, title: 'Data Structures', date: '2025-09-20', status: 'completed', score: 94 },
-  ];
+  const { user } = useAuthStore();
+  
+  // Check if user has admin role
+  const isAdmin = user?.role === 'admin' || user?.roles?.includes('admin');
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="mb-2">Dashboard</h1>
-          <p className="text-xl font-bold uppercase">Your Interview Performance</p>
+          <p className="text-xl font-bold uppercase">Welcome to Your Interview Hub</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <BrutalistCard className="text-center">
-            <FileText size={48} className="mx-auto mb-4" />
-            <div className="text-5xl font-bold mb-2">{stats.interviewsTaken}</div>
-            <div className="text-sm font-bold uppercase">Interviews Taken</div>
-          </BrutalistCard>
 
-          <BrutalistCard variant="success" className="text-center">
-            <TrendingUp size={48} className="mx-auto mb-4" />
-            <div className="text-5xl font-bold mb-2">{stats.avgScore}%</div>
-            <div className="text-sm font-bold uppercase">Average Score</div>
-          </BrutalistCard>
-
-          <BrutalistCard variant="accent" className="text-center">
-            <Clock size={48} className="mx-auto mb-4" />
-            <div className="text-5xl font-bold mb-2">{stats.upcomingSlots}</div>
-            <div className="text-sm font-bold uppercase">Upcoming Slots</div>
-          </BrutalistCard>
-
-          <BrutalistCard className="text-center">
-            <BarChart3 size={48} className="mx-auto mb-4" />
-            <div className="text-5xl font-bold mb-2">{stats.totalQuestions}</div>
-            <div className="text-sm font-bold uppercase">Questions Answered</div>
-          </BrutalistCard>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <h2 className="mb-6">Recent Interviews</h2>
-            <div className="space-y-4">
-              {recentInterviews.map((interview) => (
-                <BrutalistCard
-                  key={interview.id}
-                  variant={interview.score >= 80 ? 'success' : 'default'}
-                >
-                  <h3 className="text-lg mb-2">{interview.title}</h3>
-                  <div className="flex justify-between items-center text-sm font-bold">
-                    <span>{interview.date}</span>
-                    <span className="text-2xl">{interview.score}%</span>
-                  </div>
-                </BrutalistCard>
-              ))}
-            </div>
-          </div>
-
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
             <h2 className="mb-6">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <BrutalistCard className="p-8">
@@ -133,6 +80,22 @@ const Dashboard = () => {
                   Edit Profile
                 </BrutalistButton>
               </BrutalistCard>
+
+              {isAdmin && (
+                <BrutalistCard className="p-8">
+                  <h3 className="mb-4">Admin Panel</h3>
+                  <p className="mb-6 font-medium">
+                    Manage topics and questions for the interview system. Create and organize content.
+                  </p>
+                  <BrutalistButton
+                    variant="accent"
+                    size="full"
+                    onClick={() => navigate('/admin')}
+                  >
+                    Admin Panel
+                  </BrutalistButton>
+                </BrutalistCard>
+              )}
             </div>
           </div>
         </div>

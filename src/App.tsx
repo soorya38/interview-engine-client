@@ -11,7 +11,9 @@ import Dashboard from "./pages/Dashboard";
 import InterviewSummaries from "./pages/InterviewSummaries";
 import TestPractice from "./pages/TestPractice";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +59,14 @@ const App = () => (
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <Admin />
+                </AdminRoute>
               }
             />
             <Route path="*" element={<NotFound />} />

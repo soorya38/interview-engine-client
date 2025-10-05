@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import BrutalistCard from '@/components/BrutalistCard';
 import BrutalistButton from '@/components/BrutalistButton';
-import BrutalistInput from '@/components/BrutalistInput';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/use-toast';
-import { interviewApi, type InterviewSession, type InterviewSessionDetail, type Topic } from '@/lib/interviewApi';
-import { ArrowLeft, Calendar, Clock, Target, Filter, SortAsc, SortDesc, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { interviewApi, type InterviewSession, type InterviewSessionDetail } from '@/lib/interviewApi';
+import { ArrowLeft, Calendar, Clock, Target, ChevronLeft, ChevronRight } from 'lucide-react';
 
 
 const InterviewSummaries = () => {
@@ -18,17 +17,7 @@ const InterviewSummaries = () => {
   const [loadingSession, setLoadingSession] = useState(false);
   const [showSessionDetail, setShowSessionDetail] = useState(false);
   
-  // Filtering and pagination state
-  const [topics, setTopics] = useState<Topic[]>([]);
-  const [filters, setFilters] = useState({
-    status: '',
-    topic_id: '',
-    date_from: '',
-    date_to: '',
-    search: ''
-  });
-  const [sortBy, setSortBy] = useState<'started_at' | 'ended_at' | 'technical_score' | 'duration_minutes'>('started_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  // Pagination state
   const [pagination, setPagination] = useState({
     limit: 20,
     offset: 0,
@@ -36,30 +25,16 @@ const InterviewSummaries = () => {
     has_more: false
   });
   const [summaryStats, setSummaryStats] = useState({
-    total_sessions: 0,
-    completed_sessions: 0,
-    average_score: 0,
-    high_scores: 0
+    total_sessions: 0
   });
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (user?.sub) {
-      fetchTopics();
       fetchInterviewSessions();
     }
   }, [user?.sub]);
-
-  // Fetch topics for filtering
-  const fetchTopics = async () => {
-    try {
-      const topicsData = await interviewApi.getTopics(user?.sub || '');
-      setTopics(topicsData || []);
-    } catch (error: any) {
-      console.error('Error fetching topics:', error);
-    }
-  };
 
   const fetchInterviewSessions = async (resetOffset = false, retryCount = 0) => {
     const maxRetries = 3;
@@ -71,16 +46,7 @@ const InterviewSummaries = () => {
       const response = await interviewApi.getInterviewSessions(
         user?.sub || '', 
         pagination.limit, 
-        offset,
-        {
-          status: filters.status || undefined,
-          topic_id: filters.topic_id || undefined,
-          date_from: filters.date_from || undefined,
-          date_to: filters.date_to || undefined,
-          search: filters.search || undefined
-        },
-        sortBy,
-        sortOrder
+        offset
       );
       
       // Handle response structure
@@ -93,10 +59,7 @@ const InterviewSummaries = () => {
           has_more: response.pagination?.has_more || false
         }));
         setSummaryStats({
-          total_sessions: response.summary?.total_sessions || 0,
-          completed_sessions: response.summary?.completed_sessions || 0,
-          average_score: response.summary?.average_score || 0,
-          high_scores: response.summary?.high_scores || 0
+          total_sessions: response.summary?.total_sessions || 0
         });
       } else {
         // Fallback for direct array response
@@ -193,40 +156,6 @@ const InterviewSummaries = () => {
     return `${mins}m`;
   };
 
-  // Filter and sort handlers
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setPagination(prev => ({ ...prev, offset: 0 }));
-  };
-
-  const handleSortChange = (field: 'started_at' | 'ended_at' | 'technical_score' | 'duration_minutes') => {
-    if (sortBy === field) {
-      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
-    }
-    setPagination(prev => ({ ...prev, offset: 0 }));
-  };
-
-  const handleSearch = () => {
-    setPagination(prev => ({ ...prev, offset: 0 }));
-    fetchInterviewSessions(true);
-  };
-
-  const handleClearFilters = () => {
-    setFilters({
-      status: '',
-      topic_id: '',
-      date_from: '',
-      date_to: '',
-      search: ''
-    });
-    setSortBy('started_at');
-    setSortOrder('desc');
-    setPagination(prev => ({ ...prev, offset: 0 }));
-    fetchInterviewSessions(true);
-  };
 
   const handlePageChange = (direction: 'prev' | 'next') => {
     const newOffset = direction === 'prev' 
@@ -243,14 +172,6 @@ const InterviewSummaries = () => {
     fetchInterviewSessions(true);
   };
 
-  // Apply filters when they change
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchInterviewSessions(true);
-    }, 500); // Debounce search
-
-    return () => clearTimeout(timeoutId);
-  }, [filters, sortBy, sortOrder]);
 
 
   if (loading) {
@@ -363,156 +284,15 @@ const InterviewSummaries = () => {
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <BrutalistCard>
-            <div className="text-center p-4">
-              <div className="text-2xl font-bold">{summaryStats.total_sessions}</div>
-              <div className="text-sm font-bold uppercase">Total Interviews</div>
-            </div>
-          </BrutalistCard>
-          <BrutalistCard>
-            <div className="text-center p-4">
-              <div className="text-2xl font-bold">{summaryStats.completed_sessions}</div>
-              <div className="text-sm font-bold uppercase">Completed</div>
-            </div>
-          </BrutalistCard>
-          <BrutalistCard>
-            <div className="text-center p-4">
-              <div className="text-2xl font-bold">{summaryStats.high_scores}</div>
-              <div className="text-sm font-bold uppercase">High Scores</div>
-            </div>
-          </BrutalistCard>
-          <BrutalistCard>
-            <div className="text-center p-4">
-              <div className="text-2xl font-bold">{Math.round(summaryStats.average_score)}%</div>
-              <div className="text-sm font-bold uppercase">Avg Score</div>
+        <div className="flex justify-start mb-8">
+          <BrutalistCard className="w-fit min-w-[120px] sm:min-w-[140px]">
+            <div className="text-center p-3">
+              <div className="text-lg sm:text-xl font-bold">{summaryStats.total_sessions}</div>
+              <div className="text-xs font-bold uppercase">Total Interviews</div>
             </div>
           </BrutalistCard>
         </div>
 
-        {/* Filters and Sorting */}
-        <BrutalistCard className="mb-6">
-          <div className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Filter size={20} />
-              <h3 className="text-lg font-bold">Filters & Sorting</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              {/* Status Filter */}
-              <div>
-                <label className="block text-sm font-bold uppercase mb-2">Status</label>
-                <select
-                  className="w-full px-3 py-2 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                >
-                  <option value="">All Status</option>
-                  <option value="completed">Completed</option>
-                  <option value="active">Active</option>
-                  <option value="abandoned">Abandoned</option>
-                </select>
-              </div>
-
-              {/* Topic Filter */}
-              <div>
-                <label className="block text-sm font-bold uppercase mb-2">Topic</label>
-                <select
-                  className="w-full px-3 py-2 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                  value={filters.topic_id}
-                  onChange={(e) => handleFilterChange('topic_id', e.target.value)}
-                >
-                  <option value="">All Topics</option>
-                  {topics.map((topic) => (
-                    <option key={topic.ID} value={topic.ID}>
-                      {topic.Topic}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Date From */}
-              <div>
-                <label className="block text-sm font-bold uppercase mb-2">From Date</label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                  value={filters.date_from}
-                  onChange={(e) => handleFilterChange('date_from', e.target.value)}
-                />
-              </div>
-
-              {/* Date To */}
-              <div>
-                <label className="block text-sm font-bold uppercase mb-2">To Date</label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                  value={filters.date_to}
-                  onChange={(e) => handleFilterChange('date_to', e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Search and Sort */}
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
-              {/* Search */}
-              <div className="flex-1">
-                <label className="block text-sm font-bold uppercase mb-2">Search</label>
-                <div className="flex gap-2">
-                  <BrutalistInput
-                    type="text"
-                    placeholder="Search sessions..."
-                    value={filters.search}
-                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                    className="flex-1"
-                  />
-                  <BrutalistButton variant="secondary" onClick={handleSearch}>
-                    <Search size={16} />
-                  </BrutalistButton>
-                </div>
-              </div>
-
-              {/* Sort Options */}
-              <div className="flex gap-2">
-                <div>
-                  <label className="block text-sm font-bold uppercase mb-2">Sort By</label>
-                  <select
-                    className="px-3 py-2 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                  >
-                    <option value="started_at">Start Date</option>
-                    <option value="ended_at">End Date</option>
-                    <option value="technical_score">Technical Score</option>
-                    <option value="duration_minutes">Duration</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold uppercase mb-2">Order</label>
-                  <BrutalistButton
-                    variant="secondary"
-                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="flex items-center gap-1"
-                  >
-                    {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
-                    {sortOrder === 'asc' ? 'Asc' : 'Desc'}
-                  </BrutalistButton>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <BrutalistButton variant="primary" onClick={handleSearch}>
-                Apply Filters
-              </BrutalistButton>
-              <BrutalistButton variant="secondary" onClick={handleClearFilters}>
-                Clear Filters
-              </BrutalistButton>
-            </div>
-          </div>
-        </BrutalistCard>
 
         {/* Interview Sessions List */}
         <div className="space-y-4">

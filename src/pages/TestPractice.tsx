@@ -31,12 +31,7 @@ const TestPractice = () => {
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceBuffer, setVoiceBuffer] = useState('');
-  const [newTopicName, setNewTopicName] = useState('');
-  const [newQuestionText, setNewQuestionText] = useState('');
-  const [selectedQuestionTopic, setSelectedQuestionTopic] = useState('');
-  const [newQuestionTags, setNewQuestionTags] = useState('');
-  const [newQuestionTime, setNewQuestionTime] = useState('');
-  const [activeTab, setActiveTab] = useState<'interview' | 'topics' | 'questions'>('interview');
+  const [activeTab, setActiveTab] = useState<'interview'>('interview');
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
@@ -119,11 +114,6 @@ const TestPractice = () => {
     }
   }, [timeRemaining, isTimerActive, currentSessionId, isHandlingExpiry]);
 
-  useEffect(() => {
-    if (topics.length > 0 && !selectedQuestionTopic) {
-      setSelectedQuestionTopic(topics[0].ID);
-    }
-  }, [topics, selectedQuestionTopic]);
 
   useEffect(() => {
     initializeSpeechRecognition();
@@ -1124,73 +1114,6 @@ const TestPractice = () => {
     }
   };
 
-  const handleCreateTopic = async () => {
-    if (!userId || !newTopicName.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please set a User ID and enter a topic name.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await interviewApi.createTopic(userId, { topic: newTopicName.trim() });
-      setNewTopicName('');
-      toast({
-        title: "Topic Created",
-        description: "Topic created successfully!",
-        variant: "default",
-      });
-      fetchTopics();
-    } catch (error: any) {
-      toast({
-        title: "Error Creating Topic",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCreateQuestion = async () => {
-    if (!userId || !selectedQuestionTopic || !newQuestionText.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a topic and enter question text.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const tags = newQuestionTags.trim() ? newQuestionTags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
-      const timeMinutes = newQuestionTime.trim() ? parseInt(newQuestionTime.trim()) : null;
-      
-      const questionData = { 
-        topic_id: selectedQuestionTopic, 
-        question: newQuestionText.trim(),
-        tags: tags,
-        time_minutes: timeMinutes
-      };
-      
-      console.log('Creating question with data:', questionData);
-      await interviewApi.createQuestion(userId, questionData);
-      setNewQuestionText('');
-      setNewQuestionTags('');
-      setNewQuestionTime('');
-      toast({
-        title: "Question Created",
-        description: "Question created successfully!",
-        variant: "default",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error Creating Question",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   const renderLobbyScreen = () => (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -1205,295 +1128,105 @@ const TestPractice = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <BrutalistCard>
-            <div className="flex items-center gap-2 mb-6">
-              <button
-                className={`px-4 py-2 border-2 font-bold uppercase text-sm ${
-                  activeTab === 'interview' 
-                    ? 'border-primary bg-primary text-primary-foreground' 
-                    : 'border-border bg-background text-foreground hover:bg-muted'
-                }`}
-                onClick={() => setActiveTab('interview')}
-              >
-                Interview
-              </button>
-              <button
-                className={`px-4 py-2 border-2 font-bold uppercase text-sm ${
-                  activeTab === 'topics' 
-                    ? 'border-primary bg-primary text-primary-foreground' 
-                    : 'border-border bg-background text-foreground hover:bg-muted'
-                }`}
-                onClick={() => setActiveTab('topics')}
-              >
-                Topics
-              </button>
-              <button
-                className={`px-4 py-2 border-2 font-bold uppercase text-sm ${
-                  activeTab === 'questions' 
-                    ? 'border-primary bg-primary text-primary-foreground' 
-                    : 'border-border bg-background text-foreground hover:bg-muted'
-                }`}
-                onClick={() => setActiveTab('questions')}
-              >
-                Questions
-              </button>
-            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-bold uppercase text-sm mb-2">User ID</label>
+                <BrutalistInput
+                  type="text"
+                  placeholder="Auto-populated from your account"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  disabled={!!user?.sub}
+                  className={user?.sub ? 'bg-muted cursor-not-allowed' : ''}
+                />
+                {user?.sub && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Automatically set from your Zitadel account
+                  </div>
+                )}
+              </div>
 
-            {activeTab === 'interview' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block font-bold uppercase text-sm mb-2">User ID</label>
-                  <BrutalistInput
-                    type="text"
-                    placeholder="Auto-populated from your account"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    disabled={!!user?.sub}
-                    className={user?.sub ? 'bg-muted cursor-not-allowed' : ''}
-                  />
-                  {user?.sub && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Automatically set from your Zitadel account
-                    </div>
+              <div>
+                <label className="block font-bold uppercase text-sm mb-2">Topic</label>
+                <select
+                  className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
+                  value={selectedTopic}
+                  onChange={(e) => setSelectedTopic(e.target.value)}
+                  disabled={topics.length === 0}
+                >
+                  {topics.length === 0 ? (
+                    <option>Set User ID to load topics...</option>
+                  ) : (
+                    topics.map((topic) => (
+                      <option key={topic.ID} value={topic.ID}>
+                        {topic.Topic}
+                      </option>
+                    ))
                   )}
-                </div>
+                </select>
+              </div>
 
-                <div>
-                  <label className="block font-bold uppercase text-sm mb-2">Topic</label>
-                  <select
-                    className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                    value={selectedTopic}
-                    onChange={(e) => setSelectedTopic(e.target.value)}
-                    disabled={topics.length === 0}
-                  >
-                    {topics.length === 0 ? (
-                      <option>Set User ID to load topics...</option>
-                    ) : (
-                      topics.map((topic) => (
-                        <option key={topic.ID} value={topic.ID}>
-                          {topic.Topic}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
+              <div>
+                <label className="block font-bold uppercase text-sm mb-2">Google Cloud API Key</label>
+                <BrutalistInput
+                  type="password"
+                  placeholder="Required for speech"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                />
+              </div>
 
-                <div>
-                  <label className="block font-bold uppercase text-sm mb-2">Google Cloud API Key</label>
-                  <BrutalistInput
-                    type="password"
-                    placeholder="Required for speech"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                  />
-                </div>
+              <div>
+                <label className="block font-bold uppercase text-sm mb-2">Interviewer Voice</label>
+                <select
+                  className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
+                  value={selectedVoice}
+                  onChange={(e) => setSelectedVoice(e.target.value)}
+                >
+                  <optgroup label="English (US)">
+                    <option value="en-US-Standard-B">US Male (Standard)</option>
+                    <option value="en-US-Standard-C">US Female (Standard)</option>
+                  </optgroup>
+                  <optgroup label="English (UK)">
+                    <option value="en-GB-Standard-B">UK Male (Standard)</option>
+                    <option value="en-GB-Standard-C">UK Female (Standard)</option>
+                  </optgroup>
+                  <optgroup label="English (Australia)">
+                    <option value="en-AU-Standard-B">AU Male (Standard)</option>
+                    <option value="en-AU-Standard-C">AU Female (Standard)</option>
+                  </optgroup>
+                  <optgroup label="English (India)">
+                    <option value="en-IN-Standard-B">Indian Male (Standard)</option>
+                    <option value="en-IN-Standard-A">Indian Female (Standard)</option>
+                  </optgroup>
+                </select>
+              </div>
 
-
-                <div>
-                  <label className="block font-bold uppercase text-sm mb-2">Interviewer Voice</label>
-                  <select
-                    className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                    value={selectedVoice}
-                    onChange={(e) => setSelectedVoice(e.target.value)}
-                  >
-                    <optgroup label="English (US)">
-                      <option value="en-US-Standard-B">US Male (Standard)</option>
-                      <option value="en-US-Standard-C">US Female (Standard)</option>
-                    </optgroup>
-                    <optgroup label="English (UK)">
-                      <option value="en-GB-Standard-B">UK Male (Standard)</option>
-                      <option value="en-GB-Standard-C">UK Female (Standard)</option>
-                    </optgroup>
-                    <optgroup label="English (Australia)">
-                      <option value="en-AU-Standard-B">AU Male (Standard)</option>
-                      <option value="en-AU-Standard-C">AU Female (Standard)</option>
-                    </optgroup>
-                    <optgroup label="English (India)">
-                      <option value="en-IN-Standard-B">Indian Male (Standard)</option>
-                      <option value="en-IN-Standard-A">Indian Female (Standard)</option>
-                    </optgroup>
-                  </select>
-                </div>
-
-                <div>
-                  <BrutalistButton 
-                    variant="secondary" 
-                    size="full"
-                    onClick={() => {
-                      if (!apiKey) {
-                        toast({
-                          title: "API Key Required",
-                          description: "Please enter your Google Cloud API key first.",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      speakText("Hello! This is a test of the text-to-speech functionality. If you can hear this, the TTS is working correctly.");
-                    }}
-                    disabled={!apiKey}
-                  >
-                    Test Voice
-                  </BrutalistButton>
-                </div>
-
-
-                <div>
-                  <BrutalistButton 
-                    variant="secondary" 
-                    size="full"
-                    onClick={async () => {
-                      console.log('Fetching questions from database...');
-                      const questions = await fetchQuestions(selectedTopic);
-                      console.log('All questions with time_minutes:');
-                      questions.forEach((q, index) => {
-                        console.log(`Q${index + 1}: ${q.time_minutes}min - ${q.question.substring(0, 50)}...`);
-                      });
+              <div>
+                <BrutalistButton 
+                  variant="secondary" 
+                  size="full"
+                  onClick={() => {
+                    if (!apiKey) {
                       toast({
-                        title: "Questions Fetched",
-                        description: `Found ${questions.length} questions. Check console for time_minutes details.`,
-                        variant: "default",
+                        title: "API Key Required",
+                        description: "Please enter your Google Cloud API key first.",
+                        variant: "destructive",
                       });
-                    }}
-                  >
-                    Debug: Show Question Times
-                  </BrutalistButton>
-                </div>
-
-
-                <BrutalistButton variant="primary" size="full" onClick={handleStartInterview}>
-                  Start Interview
+                      return;
+                    }
+                    speakText("Hello! This is a test of the text-to-speech functionality. If you can hear this, the TTS is working correctly.");
+                  }}
+                  disabled={!apiKey}
+                >
+                  Test Voice
                 </BrutalistButton>
               </div>
-            )}
 
-            {activeTab === 'topics' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block font-bold uppercase text-sm mb-2">Create New Topic</label>
-                  <div className="flex gap-2">
-                    <BrutalistInput
-                      type="text"
-                      placeholder="Enter topic name"
-                      value={newTopicName}
-                      onChange={(e) => setNewTopicName(e.target.value)}
-                      className="flex-1"
-                    />
-                    <BrutalistButton 
-                      variant="secondary" 
-                      onClick={handleCreateTopic}
-                      disabled={!newTopicName.trim()}
-                    >
-                      <Plus size={16} />
-                    </BrutalistButton>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-bold uppercase text-sm mb-2">Existing Topics</label>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {topics.map((topic) => (
-                      <div key={topic.ID} className="p-3 border-2 border-border bg-background">
-                        <div className="font-bold text-foreground">{topic.Topic || 'Unnamed Topic'}</div>
-                      </div>
-                    ))}
-                    {topics.length === 0 && (
-                      <div className="p-3 border-2 border-border bg-muted text-center text-muted-foreground">
-                        No topics found. Create one above.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'questions' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block font-bold uppercase text-sm mb-2">Create New Question</label>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block font-bold uppercase text-sm mb-2">Topic</label>
-                      <select
-                        className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                        value={selectedQuestionTopic}
-                        onChange={(e) => setSelectedQuestionTopic(e.target.value)}
-                        disabled={topics.length === 0}
-                      >
-                        <option value="">Select a topic...</option>
-                        {topics.map((topic) => (
-                          <option key={topic.ID} value={topic.ID}>
-                            {topic.Topic}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block font-bold uppercase text-sm mb-2">Question Text</label>
-                      <Textarea
-                        placeholder="Enter the question text..."
-                        value={newQuestionText}
-                        onChange={(e) => setNewQuestionText(e.target.value)}
-                        className="min-h-[100px] border-2 border-border resize-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-bold uppercase text-sm mb-2">Tags (comma-separated)</label>
-                      <BrutalistInput
-                        type="text"
-                        placeholder="e.g., javascript, algorithms, data-structures"
-                        value={newQuestionTags}
-                        onChange={(e) => setNewQuestionTags(e.target.value)}
-                      />
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Separate multiple tags with commas
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block font-bold uppercase text-sm mb-2">Time Limit (minutes)</label>
-                      <BrutalistInput
-                        type="number"
-                        placeholder="e.g., 15"
-                        value={newQuestionTime}
-                        onChange={(e) => setNewQuestionTime(e.target.value)}
-                        min="1"
-                        max="120"
-                      />
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Optional: Set time limit for answering this question
-                      </div>
-                    </div>
-                    <BrutalistButton 
-                      variant="primary" 
-                      onClick={handleCreateQuestion}
-                      disabled={!selectedQuestionTopic || !newQuestionText.trim()}
-                    >
-                      <Plus className="mr-2" size={16} />
-                      Create Question
-                    </BrutalistButton>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-bold uppercase text-sm mb-2">Existing Questions</label>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    <BrutalistButton 
-                      variant="secondary" 
-                      size="full"
-                      onClick={async () => {
-                        console.log('Fetching questions from database...');
-                        const questions = await fetchQuestions();
-                        toast({
-                          title: "Questions Fetched",
-                          description: `Found ${questions.length} questions. Check console for details.`,
-                          variant: "default",
-                        });
-                      }}
-                    >
-                      Load Questions from Database
-                    </BrutalistButton>
-                  </div>
-                </div>
-              </div>
-            )}
+              <BrutalistButton variant="primary" size="full" onClick={handleStartInterview}>
+                Start Interview
+              </BrutalistButton>
+            </div>
           </BrutalistCard>
         </div>
 
