@@ -145,15 +145,218 @@ const Profile = () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await profileApi.generateResume();
-      // Open the download URL in a new tab
-      window.open(result.downloadUrl, '_blank');
+      
+      // Generate PDF using browser's print functionality
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Popup blocked. Please allow popups for this site.');
+      }
+
+      // Create HTML content for the resume
+      const resumeHTML = generateResumeHTML(profileData);
+      
+      printWindow.document.write(resumeHTML);
+      printWindow.document.close();
+      
+      // Wait for content to load, then trigger print
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      };
+      
     } catch (err) {
       console.error('Failed to generate resume:', err);
       setError('Failed to generate resume');
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateResumeHTML = (profile: Profile) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Resume - ${profile.profile.name}</title>
+        <style>
+          body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: white;
+            color: #333;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+          }
+          .name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .title {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+          }
+          .contact {
+            font-size: 14px;
+            color: #555;
+          }
+          .section {
+            margin-bottom: 25px;
+          }
+          .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+          }
+          .experience-item, .education-item, .project-item {
+            margin-bottom: 15px;
+          }
+          .item-title {
+            font-weight: bold;
+            font-size: 16px;
+          }
+          .item-company, .item-school {
+            font-weight: bold;
+            color: #666;
+          }
+          .item-dates {
+            font-style: italic;
+            color: #888;
+            font-size: 14px;
+          }
+          .item-description {
+            margin-top: 5px;
+            font-size: 14px;
+          }
+          .skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          .skill-tag {
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+          }
+          .project-links {
+            margin-top: 5px;
+          }
+          .project-links a {
+            color: #0066cc;
+            text-decoration: none;
+            margin-right: 15px;
+            font-size: 14px;
+          }
+          .project-links a:hover {
+            text-decoration: underline;
+          }
+          .technologies {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+          }
+          @media print {
+            body { margin: 0; padding: 15px; }
+            .section { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="name">${profile.profile.name}</div>
+          <div class="title">${profile.profile.title}</div>
+          <div class="contact">
+            ${profile.profile.email} | ${profile.profile.phone} | ${profile.profile.location}
+          </div>
+        </div>
+
+        ${profile.experiences && profile.experiences.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Experience</div>
+          ${profile.experiences.map(exp => `
+            <div class="experience-item">
+              <div class="item-title">${exp.role}</div>
+              <div class="item-company">${exp.company}</div>
+              <div class="item-dates">${exp.dates}</div>
+              <div class="item-description">${exp.description}</div>
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        ${profile.education && profile.education.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Education</div>
+          ${profile.education.map(edu => `
+            <div class="education-item">
+              <div class="item-title">${edu.degree}</div>
+              <div class="item-school">${edu.school}</div>
+              <div class="item-dates">${edu.dates}</div>
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        ${profile.skills && profile.skills.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Skills</div>
+          <div class="skills">
+            ${profile.skills.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        ${profile.projects && profile.projects.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Projects</div>
+          ${profile.projects.map(project => `
+            <div class="project-item">
+              <div class="item-title">${project.name}</div>
+              <div class="item-dates">${project.date} - ${project.status}</div>
+              <div class="item-description">${project.description}</div>
+              ${project.technologies && project.technologies.length > 0 ? `
+                <div class="technologies">
+                  <strong>Technologies:</strong> ${project.technologies.join(', ')}
+                </div>
+              ` : ''}
+              ${(project.githubUrl || project.liveUrl) ? `
+                <div class="project-links">
+                  ${project.githubUrl ? `<a href="${project.githubUrl}">GitHub</a>` : ''}
+                  ${project.liveUrl ? `<a href="${project.liveUrl}">Live Demo</a>` : ''}
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        ${profile.achievements && profile.achievements.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Achievements</div>
+          ${profile.achievements.map(achievement => `
+            <div class="experience-item">
+              <div class="item-title">${achievement.title}</div>
+              <div class="item-dates">${achievement.date}</div>
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+      </body>
+      </html>
+    `;
   };
 
   const handleSaveChanges = async () => {
@@ -475,14 +678,19 @@ const Profile = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1>Profile</h1>
-            {(!isApiAvailable() || error?.includes('Development Mode') || error?.includes('API not available')) && (
-              <p className="text-sm text-muted-foreground mt-1">
-                🔧 Development Mode: Profile data is saved locally
-              </p>
-            )}
+        <div className="mb-12 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-2xl luxury-glow">
+              <User className="text-white w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-semibold text-white">Profile</h1>
+              {(!isApiAvailable() || error?.includes('Development Mode') || error?.includes('API not available')) && (
+                <p className="text-sm text-white/70 mt-1">
+                  🔧 Development Mode: Profile data is saved locally
+                </p>
+              )}
+            </div>
           </div>
           <BrutalistButton
             variant={isEditing ? 'success' : 'primary'}
@@ -855,15 +1063,14 @@ const Profile = () => {
               </div>
             </BrutalistCard>
 
-            <BrutalistCard className="bg-white border-white">
-              <h2 className="mb-6 flex items-center gap-2">
-                <FolderOpen size={32} />
-                Projects
+            <BrutalistCard>
+              <h2 className="mb-8 text-white">
+                <span className="text-2xl font-semibold">Projects</span>
               </h2>
               <div className="space-y-6">
                 {profileData?.projects?.map((project, index) => (
-                  <div key={project.id} className="border-l-4 border-success pl-4 pb-4 bg-white rounded-sm">
-                    {index > 0 && <div className="border-t-2 border-gray-300 mb-4 -ml-4"></div>}
+                  <div key={project.id} className="luxury-glass-card p-6 mb-6">
+                    {index > 0 && <div className="border-t border-white/20 mb-6"></div>}
                     {isEditing ? (
                       <div className="space-y-3">
                         <BrutalistInput
@@ -872,7 +1079,7 @@ const Profile = () => {
                           placeholder="Project Name"
                         />
                         <textarea
-                          className="w-full p-3 border-2 border-border bg-input font-medium"
+                          className="w-full px-4 py-3 luxury-glass-input text-white font-medium focus:border-violet-500 focus:outline-none placeholder:text-white/50"
                           value={project.description}
                           onChange={(e) => handleUpdateProject(project.id, 'description', e.target.value)}
                           rows={3}
@@ -897,7 +1104,7 @@ const Profile = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <select
-                            className="p-3 border-2 border-border bg-input font-medium"
+                            className="w-full px-4 py-3 luxury-glass-input text-white font-medium focus:border-violet-500 focus:outline-none"
                             value={project.status}
                             onChange={(e) => handleUpdateProject(project.id, 'status', e.target.value)}
                           >
@@ -923,39 +1130,39 @@ const Profile = () => {
                       </div>
                     ) : (
                       <>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-xl font-bold">{project.name}</h3>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 text-xs font-bold uppercase border-2 ${
+                        <div className="flex justify-between items-start mb-4">
+                          <h3 className="text-2xl font-semibold text-white">{project.name}</h3>
+                          <div className="flex items-center gap-3">
+                            <span className={`px-4 py-2 text-sm font-medium rounded-xl ${
                               project.status === 'Completed' 
-                                ? 'border-green-500 bg-green-100 text-green-700'
+                                ? 'bg-emerald-500/20 text-emerald-100 border border-emerald-500/30'
                                 : project.status === 'In Progress'
-                                ? 'border-yellow-500 bg-yellow-100 text-yellow-700'
-                                : 'border-blue-500 bg-blue-100 text-blue-700'
+                                ? 'bg-yellow-500/20 text-yellow-100 border border-yellow-500/30'
+                                : 'bg-blue-500/20 text-blue-100 border border-blue-500/30'
                             }`}>
                               {project.status}
                             </span>
-                            <span className="text-sm font-bold text-muted-foreground">{project.date}</span>
+                            <span className="text-sm font-medium text-white/70">{project.date}</span>
                           </div>
                         </div>
-                        <p className="font-medium mb-3">{project.description}</p>
-                        <div className="flex flex-wrap gap-2 mb-3">
+                        <p className="font-medium mb-4 text-white/80 text-lg leading-relaxed">{project.description}</p>
+                        <div className="flex flex-wrap gap-3 mb-6">
                           {project.technologies.map((tech, index) => (
                             <span
                               key={index}
-                              className="px-2 py-1 bg-accent text-accent-foreground border-2 border-accent font-bold text-xs uppercase"
+                              className="px-4 py-2 bg-violet-500/20 text-violet-100 border border-violet-500/30 font-medium text-sm rounded-xl"
                             >
                               {tech}
                             </span>
                           ))}
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-4">
                           {project.githubUrl && (
                             <a
                               href={project.githubUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm font-bold text-primary hover:underline"
+                              className="luxury-glass-button px-6 py-3 text-white hover:bg-white/20 transition-all"
                             >
                               GitHub →
                             </a>
@@ -965,7 +1172,7 @@ const Profile = () => {
                               href={project.liveUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm font-bold text-success hover:underline"
+                              className="luxury-glass-button px-6 py-3 text-white hover:bg-white/20 transition-all"
                             >
                               Live Demo →
                             </a>
@@ -976,15 +1183,15 @@ const Profile = () => {
                   </div>
                 ))}
                 {isEditing && (
-                  <div className="border-2 border-dashed border-success-foreground p-4 space-y-3">
-                    <h4 className="font-bold uppercase text-sm">Add New Project</h4>
+                  <div className="luxury-glass-card p-6 space-y-4">
+                    <h4 className="font-semibold text-white text-lg">Add New Project</h4>
                     <BrutalistInput
                       value={newProject.name}
                       onChange={(e) => setNewProject({...newProject, name: e.target.value})}
                       placeholder="Project Name"
                     />
                     <textarea
-                      className="w-full p-3 border-2 border-border bg-input font-medium"
+                      className="w-full px-4 py-3 luxury-glass-input text-white font-medium focus:border-violet-500 focus:outline-none placeholder:text-white/50"
                       value={newProject.description}
                       onChange={(e) => setNewProject({...newProject, description: e.target.value})}
                       rows={3}
@@ -1009,7 +1216,7 @@ const Profile = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <select
-                        className="p-3 border-2 border-border bg-input font-medium"
+                        className="w-full px-4 py-3 luxury-glass-input text-white font-medium focus:border-violet-500 focus:outline-none"
                         value={newProject.status}
                         onChange={(e) => setNewProject({...newProject, status: e.target.value})}
                       >

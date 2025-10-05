@@ -2,11 +2,14 @@
 // Update these values with your actual Zitadel instance details
 
 // For development, use a working demo instance
+const redirectUri = import.meta.env.VITE_REDIRECT_URI || window.location.origin + '/callback';
+console.log('OIDC Redirect URI:', redirectUri);
+
 export const oidcConfig = {
   authority: import.meta.env.VITE_ZITADEL_AUTHORITY || 'http://localhost',
   client_id: import.meta.env.VITE_ZITADEL_CLIENT_ID || '340722674860883973',
 
-  redirect_uri: window.location.origin + '/callback',
+  redirect_uri: redirectUri,
   // post_logout_redirect_uri: window.location.origin + '/login', // Commented out until configured in Zitadel
   response_type: 'code',
   scope: 'openid profile email',

@@ -2,59 +2,119 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Responsive Design Utilities */
+@layer utilities {
+  .responsive-container {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  
+  .responsive-heading {
+    @apply text-xl sm:text-2xl lg:text-3xl xl:text-4xl;
+  }
+  
+  .responsive-padding {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+  
+  .responsive-margin {
+    @apply m-4 sm:m-6 lg:m-8;
+  }
+  
+  .responsive-gap {
+    @apply gap-4 sm:gap-6 lg:gap-8;
+  }
+  
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  .responsive-space {
+    @apply space-y-4 sm:space-y-6 lg:space-y-8;
+  }
+}
+
+/* Classy Glassmorphic Design System - Luxury, Elegant, Sophisticated */
 
 @layer base {
   :root {
-    /* Neo-Brutalist Design System - HSL Only */
-    /* Base monochrome palette */
-    --brutalist-charcoal: 0 0% 17%;
-    --brutalist-gray: 0 0% 96%;
-    --brutalist-white: 0 0% 100%;
+    /* Luxury Glassmorphic Color Palette */
+    --luxury-bg-dark: #0E0E10;
+    --luxury-bg-light: #F8FAFC;
+    --luxury-glass-primary: rgba(255, 255, 255, 0.15);
+    --luxury-glass-secondary: rgba(255, 255, 255, 0.08);
+    --luxury-glass-accent: rgba(255, 255, 255, 0.25);
     
-    /* Surgical accent colors */
-    --brutalist-error: 0 79% 70%;
-    --brutalist-success: 174 54% 59%;
-    --brutalist-interactive: 194 62% 56%;
+    /* Neon Accent Colors */
+    --luxury-violet: #7F5AF0;
+    --luxury-emerald: #2CB67D;
+    --luxury-rose: #EF4565;
+    --luxury-violet-glow: rgba(127, 90, 240, 0.3);
+    --luxury-emerald-glow: rgba(44, 182, 125, 0.3);
+    --luxury-rose-glow: rgba(239, 69, 101, 0.3);
+    
+    /* Text Colors */
+    --luxury-text-primary: #FFFFFF;
+    --luxury-text-secondary: rgba(255, 255, 255, 0.7);
+    --luxury-text-muted: rgba(255, 255, 255, 0.5);
+    --luxury-text-dark: #1E1E1E;
+    
+    /* Border Colors */
+    --luxury-border: rgba(255, 255, 255, 0.2);
+    --luxury-border-strong: rgba(255, 255, 255, 0.3);
+    --luxury-border-weak: rgba(255, 255, 255, 0.1);
     
     /* Core tokens */
-    --background: var(--brutalist-charcoal);
-    --foreground: var(--brutalist-gray);
+    --background: var(--luxury-bg-dark);
+    --foreground: var(--luxury-text-primary);
 
-    --card: var(--brutalist-gray);
-    --card-foreground: var(--brutalist-charcoal);
+    --card: var(--luxury-glass-primary);
+    --card-foreground: var(--luxury-text-primary);
 
-    --popover: var(--brutalist-gray);
-    --popover-foreground: var(--brutalist-charcoal);
+    --popover: var(--luxury-glass-accent);
+    --popover-foreground: var(--luxury-text-primary);
 
-    --primary: var(--brutalist-charcoal);
-    --primary-foreground: var(--brutalist-gray);
+    --primary: var(--luxury-violet);
+    --primary-foreground: var(--luxury-text-primary);
 
-    --secondary: var(--brutalist-gray);
-    --secondary-foreground: var(--brutalist-charcoal);
+    --secondary: var(--luxury-glass-secondary);
+    --secondary-foreground: var(--luxury-text-secondary);
 
-    --muted: 0 0% 85%;
-    --muted-foreground: 0 0% 40%;
+    --muted: var(--luxury-glass-secondary);
+    --muted-foreground: var(--luxury-text-muted);
 
-    --accent: var(--brutalist-interactive);
-    --accent-foreground: var(--brutalist-white);
+    --accent: var(--luxury-emerald);
+    --accent-foreground: var(--luxury-text-primary);
 
-    --destructive: var(--brutalist-error);
-    --destructive-foreground: var(--brutalist-white);
+    --destructive: var(--luxury-rose);
+    --destructive-foreground: var(--luxury-text-primary);
 
-    --success: var(--brutalist-success);
-    --success-foreground: var(--brutalist-white);
+    --success: var(--luxury-emerald);
+    --success-foreground: var(--luxury-text-primary);
 
-    --border: var(--brutalist-charcoal);
-    --input: var(--brutalist-gray);
-    --ring: var(--brutalist-interactive);
+    --border: var(--luxury-border);
+    --input: var(--luxury-glass-primary);
+    --ring: var(--luxury-violet);
 
-    --radius: 0rem; /* Neo-brutalist: NO rounded corners */
+    --radius: 1.5rem; /* Luxury: Larger rounded corners for elegance */
 
-    /* Transition: Instant state changes only */
-    --transition-brutal: none;
+    /* Luxury typography scale */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --font-size-4xl: 2.25rem;
+    --font-size-5xl: 3rem;
   }
 }
 
@@ -64,39 +124,272 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: 'Montserrat', 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 16px;
-    line-height: 1.5;
+    line-height: 1.6;
+    font-weight: 400;
+    min-height: 100vh;
+    position: relative;
   }
 
-  /* Neo-brutalist typography */
+  /* Luxury Background with Ambient Lighting */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, var(--luxury-violet-glow) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, var(--luxury-emerald-glow) 0%, transparent 50%),
+      radial-gradient(circle at 40% 60%, var(--luxury-rose-glow) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Luxury Typography - Elegant and Sophisticated */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
+    @apply font-medium;
     line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--luxury-text-primary);
   }
 
   h1 {
-    font-size: 48px;
+    font-size: 3rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
   }
 
   h2 {
-    font-size: 32px;
+    font-size: 2.25rem;
+    font-weight: 500;
   }
 
   h3 {
-    font-size: 24px;
+    font-size: 1.875rem;
+    font-weight: 500;
   }
 
-  /* Remove all default animations */
-  *, *::before, *::after {
-    transition: none !important;
-    animation: none !important;
+  h4 {
+    font-size: 1.5rem;
+    font-weight: 500;
   }
 
-  /* Hard-edged focus states */
+  h5 {
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  h6 {
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+
+  /* Luxury Glass Elements */
+  .luxury-glass-card {
+    background: var(--luxury-glass-primary);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--luxury-border);
+    border-radius: 1.5rem;
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .luxury-glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.02) 100%);
+    border-radius: inherit;
+    z-index: -1;
+  }
+
+  .luxury-glass-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.15) 0%, 
+      transparent 50%);
+    border-radius: inherit;
+    z-index: -1;
+  }
+
+  .luxury-glass-button {
+    background: var(--luxury-glass-primary);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid var(--luxury-border);
+    border-radius: 1rem;
+    color: var(--luxury-text-primary);
+    font-weight: 500;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .luxury-glass-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.3), 
+      transparent);
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .luxury-glass-button:hover {
+    background: var(--luxury-glass-accent);
+    border-color: var(--luxury-border-strong);
+    transform: translateY(-1px);
+    box-shadow: 
+      0 8px 25px rgba(0, 0, 0, 0.3),
+      0 0 15px var(--luxury-violet-glow);
+  }
+
+  .luxury-glass-button:hover::before {
+    left: 100%;
+  }
+
+  .luxury-glass-button:active {
+    transform: translateY(0);
+  }
+
+  .luxury-glass-button-primary {
+    background: linear-gradient(135deg, 
+      var(--luxury-violet) 0%, 
+      rgba(127, 90, 240, 0.8) 100%);
+    border-color: var(--luxury-violet);
+    box-shadow: 0 0 20px var(--luxury-violet-glow);
+  }
+
+  .luxury-glass-button-secondary {
+    background: linear-gradient(135deg, 
+      var(--luxury-emerald) 0%, 
+      rgba(44, 182, 125, 0.8) 100%);
+    border-color: var(--luxury-emerald);
+    box-shadow: 0 0 20px var(--luxury-emerald-glow);
+  }
+
+  .luxury-glass-input {
+    background: var(--luxury-glass-primary);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid var(--luxury-border);
+    border-radius: 1rem;
+    color: var(--luxury-text-primary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .luxury-glass-input:focus {
+    background: var(--luxury-glass-accent);
+    border-color: var(--luxury-violet);
+    box-shadow: 
+      0 0 0 3px var(--luxury-violet-glow),
+      0 0 20px var(--luxury-violet-glow);
+    outline: none;
+  }
+
+  /* Fix select option styling */
+  .luxury-glass-input option {
+    background: var(--luxury-bg-dark);
+    color: var(--luxury-text-primary);
+    padding: 0.5rem;
+  }
+
+  select.luxury-glass-input {
+    color: var(--luxury-text-primary);
+  }
+
+  select.luxury-glass-input option {
+    background: var(--luxury-bg-dark);
+    color: var(--luxury-text-primary);
+  }
+
+  .luxury-glass-nav {
+    background: var(--luxury-glass-primary);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-bottom: 1px solid var(--luxury-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Neon Accent Effects */
+  .luxury-neon-violet {
+    box-shadow: 0 0 20px var(--luxury-violet-glow);
+  }
+
+  .luxury-neon-emerald {
+    box-shadow: 0 0 20px var(--luxury-emerald-glow);
+  }
+
+  .luxury-neon-rose {
+    box-shadow: 0 0 20px var(--luxury-rose-glow);
+  }
+
+  /* Focus states - luxury */
   *:focus-visible {
-    @apply outline-none ring-4 ring-accent;
-    outline-offset: 0;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--luxury-violet-glow);
+    border-radius: 0.75rem;
+  }
+
+  /* Smooth luxury transitions */
+  *, *::before, *::after {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Stable luxury elements - no floating */
+  .luxury-stable {
+    transform: translateY(0);
+    animation: none;
+  }
+
+  /* Subtle hover scale to prevent jumping */
+  .hover\:scale-102:hover {
+    transform: scale(1.02);
+  }
+
+  /* Ambient glow effect */
+  .luxury-glow {
+    position: relative;
+  }
+
+  .luxury-glow::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+      var(--luxury-violet), 
+      var(--luxury-emerald), 
+      var(--luxury-rose));
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.3;
+    filter: blur(8px);
   }
 }

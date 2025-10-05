@@ -5,7 +5,7 @@ import BrutalistButton from '@/components/BrutalistButton';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { interviewApi, type InterviewSession, type InterviewSessionDetail } from '@/lib/interviewApi';
-import { ArrowLeft, Calendar, Clock, Target, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Target, ChevronLeft, ChevronRight, Loader2, AlertTriangle, BarChart3, FileText, MessageSquare } from 'lucide-react';
 
 
 const InterviewSummaries = () => {
@@ -177,14 +177,14 @@ const InterviewSummaries = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-6 py-12">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="w-16 h-16 bg-accent border-4 border-border flex items-center justify-center mb-4 animate-spin mx-auto">
-                <span className="text-2xl">⏳</span>
+              <div className="w-20 h-20 bg-gradient-to-br from-accent to-accent/70 rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-lg">
+                <Loader2 className="text-white w-10 h-10 animate-spin" />
               </div>
-              <h2 className="text-xl font-bold mb-2">Loading Interview Summaries</h2>
-              <p className="text-muted-foreground">Fetching your interview history...</p>
+              <h2 className="text-2xl font-semibold mb-3">Loading Interview Summaries</h2>
+              <p className="text-muted-foreground font-medium">Fetching your interview history...</p>
             </div>
           </div>
         </div>
@@ -195,31 +195,36 @@ const InterviewSummaries = () => {
   if (hasError) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">Interview Summaries</h1>
-              <p className="text-xl font-bold uppercase">Your Interview History</p>
+        <div className="container mx-auto px-6 py-12">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-destructive to-destructive/70 rounded-2xl flex items-center justify-center shadow-lg">
+                <AlertTriangle className="text-white w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-semibold">Interview Summaries</h1>
+                <p className="text-2xl font-medium text-muted-foreground">Your Interview History</p>
+              </div>
             </div>
-            <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'}>
+            <BrutalistButton variant="outline" onClick={() => window.location.href = '/'}>
               <ArrowLeft className="mr-2" size={16} />
               Back
             </BrutalistButton>
           </div>
 
-          <BrutalistCard variant="error">
-            <div className="text-center py-12">
-              <div className="w-24 h-24 bg-destructive border-4 border-border flex items-center justify-center mb-6 mx-auto">
-                <span className="text-4xl">⚠️</span>
+          <BrutalistCard variant="error" className="p-12">
+            <div className="text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-destructive to-destructive/70 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-lg">
+                <AlertTriangle className="text-white w-12 h-12" />
               </div>
-              <h2 className="text-2xl font-bold mb-4">Unable to Load Interview Data</h2>
-              <p className="text-muted-foreground mb-6">{errorMessage}</p>
+              <h2 className="text-3xl font-semibold mb-4">Unable to Load Interview Data</h2>
+              <p className="text-muted-foreground mb-8 font-medium text-lg">{errorMessage}</p>
               <div className="flex gap-4 justify-center">
                 <BrutalistButton variant="primary" onClick={handleRetry}>
                   Try Again
                 </BrutalistButton>
                 <BrutalistButton 
-                  variant="secondary" 
+                  variant="outline" 
                   onClick={() => window.location.href = '/test-practice'}
                 >
                   Start New Interview
@@ -235,25 +240,30 @@ const InterviewSummaries = () => {
   if (sessions.length === 0) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">Interview Summaries</h1>
-              <p className="text-xl font-bold uppercase">Your Interview History</p>
+        <div className="responsive-container py-8 sm:py-12">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6 sm:mb-8">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-accent to-accent/70 rounded-2xl flex items-center justify-center shadow-lg">
+                <BarChart3 className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white">Interview Summaries</h1>
+                <p className="text-lg sm:text-xl lg:text-2xl font-medium text-white/70">Your Interview History</p>
+              </div>
             </div>
-            <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'}>
+            <BrutalistButton variant="outline" onClick={() => window.location.href = '/'}>
               <ArrowLeft className="mr-2" size={16} />
               Back
             </BrutalistButton>
           </div>
 
-          <BrutalistCard>
-            <div className="text-center py-12">
-              <div className="w-24 h-24 bg-accent border-4 border-border flex items-center justify-center mb-6 mx-auto">
-                <span className="text-4xl">📝</span>
+          <BrutalistCard className="p-8 sm:p-10 lg:p-12">
+            <div className="text-center">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-accent to-accent/70 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 mx-auto shadow-lg">
+                <FileText className="text-white w-10 h-10 sm:w-12 sm:h-12" />
               </div>
-              <h2 className="text-2xl font-bold mb-4">No Interview Summaries Yet</h2>
-              <p className="text-muted-foreground mb-6">
+              <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wide mb-3 sm:mb-4">No Interview Summaries Yet</h2>
+              <p className="text-muted-foreground mb-6 sm:mb-8 font-medium text-base sm:text-lg">
                 Complete some interviews to see your performance summaries and track your progress.
               </p>
               <BrutalistButton 
@@ -271,72 +281,83 @@ const InterviewSummaries = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Interview Summaries</h1>
-            <p className="text-xl font-bold uppercase">Your Interview History</p>
+      <div className="responsive-container py-8 sm:py-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-accent to-accent/70 rounded-2xl flex items-center justify-center shadow-lg">
+              <BarChart3 className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white">Interview Summaries</h1>
+              <p className="text-lg sm:text-xl lg:text-2xl font-medium text-white/70">Your Interview History</p>
+            </div>
           </div>
-          <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'}>
+          <BrutalistButton variant="outline" onClick={() => window.location.href = '/'}>
             <ArrowLeft className="mr-2" size={16} />
             Back
           </BrutalistButton>
         </div>
 
         {/* Summary Stats */}
-        <div className="flex justify-start mb-8">
-          <BrutalistCard className="w-fit min-w-[120px] sm:min-w-[140px]">
-            <div className="text-center p-3">
-              <div className="text-lg sm:text-xl font-bold">{summaryStats.total_sessions}</div>
-              <div className="text-xs font-bold uppercase">Total Interviews</div>
+        <div className="flex justify-start mb-8 sm:mb-12">
+          <BrutalistCard className="w-fit min-w-[120px] sm:min-w-[140px] lg:min-w-[160px] p-4 sm:p-6 hover:scale-105 transition-transform duration-300">
+            <div className="text-center">
+              <div className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">{summaryStats.total_sessions}</div>
+              <div className="text-xs sm:text-sm font-medium">Total Interviews</div>
             </div>
           </BrutalistCard>
         </div>
 
 
         {/* Interview Sessions List */}
-        <div className="space-y-4">
+        <div className="space-y-4 sm:space-y-6">
           {sessions.map((session) => (
-            <BrutalistCard key={session.session_id} className="hover:bg-muted/50 transition-colors">
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
+            <BrutalistCard key={session.session_id} className="hover:shadow-lg transition-all">
+              <div className="p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0 mb-4 sm:mb-6">
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2">{session.topic_name}</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar size={16} />
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-violet-500 to-emerald-500 rounded-xl flex items-center justify-center luxury-glow">
+                        <MessageSquare className="text-white w-3 h-3 sm:w-4 sm:h-4" />
+                      </div>
+                      <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white">{session.topic_name}</h3>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 text-sm text-white/70 font-medium">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={18} />
                         {formatDate(session.started_at)}
                       </div>
                       {session.duration_minutes && (
-                        <div className="flex items-center gap-1">
-                          <Clock size={16} />
+                        <div className="flex items-center gap-2">
+                          <Clock size={18} />
                           {formatDuration(session.duration_minutes)}
                         </div>
                       )}
-                      <div className="flex items-center gap-1">
-                        <Target size={16} />
+                      <div className="flex items-center gap-2">
+                        <Target size={18} />
                         {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-6">
                     {session.technical_score && (
                       <div className="text-right">
-                        <div className={`text-2xl font-bold ${
-                          session.technical_score >= 80 ? 'text-green-600' :
-                          session.technical_score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                        <div className={`text-3xl font-black ${
+                          session.technical_score >= 80 ? 'text-success' :
+                          session.technical_score >= 60 ? 'text-accent' : 'text-destructive'
                         }`}>
                           {session.technical_score}%
                         </div>
-                        <div className="text-xs text-muted-foreground">Technical</div>
+                        <div className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Technical</div>
                       </div>
                     )}
                     
                     <BrutalistButton
-                      variant="secondary"
+                      variant="outline"
                       onClick={() => fetchSessionDetail(session.session_id)}
                       disabled={loadingSession}
+                      className="w-full sm:w-auto"
                     >
                       {loadingSession ? 'Loading...' : 'View Details'}
                     </BrutalistButton>
@@ -344,17 +365,17 @@ const InterviewSummaries = () => {
                 </div>
 
                 {session.technical_score && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 h-2 border border-border">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 bg-muted h-3 border-2 border-black">
                       <div 
-                        className={`h-full transition-all duration-500 ${
-                          session.technical_score >= 80 ? 'bg-green-500' :
-                          session.technical_score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                        className={`h-full ${
+                          session.technical_score >= 80 ? 'bg-success' :
+                          session.technical_score >= 60 ? 'bg-accent' : 'bg-destructive'
                         }`}
                         style={{ width: `${session.technical_score}%` }}
                       />
                     </div>
-                    <span className="text-sm font-bold">
+                    <span className="text-sm font-black uppercase tracking-wide">
                       {session.technical_score >= 80 ? 'Excellent' :
                        session.technical_score >= 60 ? 'Good' : 'Needs Improvement'}
                     </span>
@@ -367,32 +388,30 @@ const InterviewSummaries = () => {
 
         {/* Pagination */}
         {pagination.total > 0 && (
-          <BrutalistCard className="mt-6">
-            <div className="p-4">
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">
-                  Showing {pagination.offset + 1} to {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total} sessions
-                </div>
-                <div className="flex gap-2">
-                  <BrutalistButton
-                    variant="secondary"
-                    onClick={() => handlePageChange('prev')}
-                    disabled={pagination.offset === 0}
-                    className="flex items-center gap-1"
-                  >
-                    <ChevronLeft size={16} />
-                    Previous
-                  </BrutalistButton>
-                  <BrutalistButton
-                    variant="secondary"
-                    onClick={() => handlePageChange('next')}
-                    disabled={!pagination.has_more}
-                    className="flex items-center gap-1"
-                  >
-                    Next
-                    <ChevronRight size={16} />
-                  </BrutalistButton>
-                </div>
+          <BrutalistCard className="mt-8 p-6">
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                Showing {pagination.offset + 1} to {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total} sessions
+              </div>
+              <div className="flex gap-3">
+                <BrutalistButton
+                  variant="outline"
+                  onClick={() => handlePageChange('prev')}
+                  disabled={pagination.offset === 0}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </BrutalistButton>
+                <BrutalistButton
+                  variant="outline"
+                  onClick={() => handlePageChange('next')}
+                  disabled={!pagination.has_more}
+                  className="flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </BrutalistButton>
               </div>
             </div>
           </BrutalistCard>

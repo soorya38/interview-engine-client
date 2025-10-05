@@ -18,8 +18,8 @@ const TestPractice = () => {
   const [userId, setUserId] = useState('');
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopic, setSelectedTopic] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState('en-US-Standard-B');
+  const [apiKey, setApiKey] = useState('AIzaSyAdEZvuLkTF0wQ914dwFGJZAhB46sb_Ca4');
+  const [selectedVoice, setSelectedVoice] = useState('en-IN-Standard-A');
   const [currentSessionId, setCurrentSessionId] = useState('');
   const [interviewerMessage, setInterviewerMessage] = useState('Waiting to start...');
   const [answerText, setAnswerText] = useState('');
@@ -42,6 +42,8 @@ const TestPractice = () => {
   const [currentQuestionTimeLimit, setCurrentQuestionTimeLimit] = useState<number | null>(null);
   const [isHandlingExpiry, setIsHandlingExpiry] = useState(false);
   const [summaryStored, setSummaryStored] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   
   const audioPlayerRef = useRef<HTMLAudioElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -126,6 +128,27 @@ const TestPractice = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleDragMove);
+      document.addEventListener('mouseup', handleDragEnd);
+      document.addEventListener('touchmove', handleDragMove, { passive: false });
+      document.addEventListener('touchend', handleDragEnd);
+    } else {
+      document.removeEventListener('mousemove', handleDragMove);
+      document.removeEventListener('mouseup', handleDragEnd);
+      document.removeEventListener('touchmove', handleDragMove);
+      document.removeEventListener('touchend', handleDragEnd);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleDragMove);
+      document.removeEventListener('mouseup', handleDragEnd);
+      document.removeEventListener('touchmove', handleDragMove);
+      document.removeEventListener('touchend', handleDragEnd);
+    };
+  }, [isDragging, dragPosition]);
 
   // Timer management functions
   const startQuestionTimer = (timeLimitMinutes: number) => {
@@ -806,10 +829,10 @@ const TestPractice = () => {
   };
 
   const handleStartInterview = async () => {
-    if (!userId || !selectedTopic) {
+    if (!selectedTopic) {
       toast({
         title: "Missing Information",
-        description: "Please set a User ID and select a topic.",
+        description: "Please select a topic.",
         variant: "destructive",
       });
       return;
@@ -989,6 +1012,48 @@ const TestPractice = () => {
     }
   };
 
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setDragPosition({
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    });
+  };
+
+  const handleDragMove = (e: MouseEvent | TouchEvent) => {
+    if (isDragging) {
+      e.preventDefault();
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const newX = clientX - dragPosition.x;
+      const newY = clientY - dragPosition.y;
+      
+      // Constrain to viewport
+      const maxX = window.innerWidth - 384; // 384px is the width of the panel
+      const maxY = window.innerHeight - 200; // 200px is approximate height
+      
+      const constrainedX = Math.max(0, Math.min(newX, maxX));
+      const constrainedY = Math.max(0, Math.min(newY, maxY));
+      
+      const panel = document.querySelector('.draggable-panel') as HTMLElement;
+      if (panel) {
+        panel.style.transform = `translate(${constrainedX}px, ${constrainedY}px)`;
+        panel.style.left = '0';
+        panel.style.top = '0';
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+      }
+    }
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
   const handleBackToLobby = async () => {
     // Store interview summary if we have one and haven't stored it yet
     if (summary && currentSessionId && !summaryStored) {
@@ -1116,46 +1181,34 @@ const TestPractice = () => {
 
 
   const renderLobbyScreen = () => (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Test Practice</h1>
-        <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'}>
+    <div className="responsive-container py-8 sm:py-12 max-w-6xl">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6 sm:mb-8">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg">
+            <span className="text-white font-bold text-base sm:text-lg">🎯</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Test Practice</h1>
+        </div>
+        <BrutalistButton variant="outline" onClick={() => window.location.href = '/'}>
           <ArrowLeft className="mr-2" size={16} />
           Back
         </BrutalistButton>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12">
         <div className="lg:col-span-2">
-          <BrutalistCard>
-            <div className="space-y-4">
+          <BrutalistCard className="p-6 sm:p-8">
+            <div className="space-y-4 sm:space-y-6">
               <div>
-                <label className="block font-bold uppercase text-sm mb-2">User ID</label>
-                <BrutalistInput
-                  type="text"
-                  placeholder="Auto-populated from your account"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  disabled={!!user?.sub}
-                  className={user?.sub ? 'bg-muted cursor-not-allowed' : ''}
-                />
-                {user?.sub && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Automatically set from your Zitadel account
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block font-bold uppercase text-sm mb-2">Topic</label>
+                <label className="block font-semibold text-sm mb-3 text-white">Topic</label>
                 <select
-                  className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
+                  className="w-full px-4 py-3 luxury-glass-input text-white font-medium focus:border-violet-500 focus:outline-none"
                   value={selectedTopic}
                   onChange={(e) => setSelectedTopic(e.target.value)}
                   disabled={topics.length === 0}
                 >
                   {topics.length === 0 ? (
-                    <option>Set User ID to load topics...</option>
+                    <option>Loading topics...</option>
                   ) : (
                     topics.map((topic) => (
                       <option key={topic.ID} value={topic.ID}>
@@ -1167,19 +1220,9 @@ const TestPractice = () => {
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-sm mb-2">Google Cloud API Key</label>
-                <BrutalistInput
-                  type="password"
-                  placeholder="Required for speech"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold uppercase text-sm mb-2">Interviewer Voice</label>
+                <label className="block font-semibold text-sm mb-3 text-white">Interviewer Voice</label>
                 <select
-                  className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
+                  className="w-full px-4 py-3 luxury-glass-input text-white font-medium focus:border-violet-500 focus:outline-none"
                   value={selectedVoice}
                   onChange={(e) => setSelectedVoice(e.target.value)}
                 >
@@ -1202,26 +1245,6 @@ const TestPractice = () => {
                 </select>
               </div>
 
-              <div>
-                <BrutalistButton 
-                  variant="secondary" 
-                  size="full"
-                  onClick={() => {
-                    if (!apiKey) {
-                      toast({
-                        title: "API Key Required",
-                        description: "Please enter your Google Cloud API key first.",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-                    speakText("Hello! This is a test of the text-to-speech functionality. If you can hear this, the TTS is working correctly.");
-                  }}
-                  disabled={!apiKey}
-                >
-                  Test Voice
-                </BrutalistButton>
-              </div>
 
               <BrutalistButton variant="primary" size="full" onClick={handleStartInterview}>
                 Start Interview
@@ -1231,13 +1254,13 @@ const TestPractice = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <BrutalistCard>
-            <div className="flex flex-col items-center justify-center p-8">
-              <div className="w-32 h-32 bg-accent border-4 border-border flex items-center justify-center mb-6">
+          <BrutalistCard className="p-8">
+            <div className="flex flex-col items-center justify-center">
+              <div className="w-32 h-32 bg-accent border-3 border-black flex items-center justify-center mb-8">
                 <span className="text-6xl">🤖</span>
               </div>
-              <h2 className="text-center mb-4">AI Interviewer</h2>
-              <p className="text-center text-sm text-muted-foreground">
+              <h2 className="text-center mb-6 text-2xl font-black uppercase tracking-wide">AI Interviewer</h2>
+              <p className="text-center text-muted-foreground font-medium leading-relaxed">
                 Practice your interview skills with our AI-powered interviewer. 
                 Get real-time feedback and improve your performance.
               </p>
@@ -1251,25 +1274,25 @@ const TestPractice = () => {
   const renderMeetScreen = () => (
     <div className="h-screen flex flex-col bg-background">
       <div className="flex-1 relative overflow-hidden">
-        <div className="h-full flex items-center justify-center p-8">
-          <BrutalistCard className="max-w-4xl w-full">
-            <div className="flex flex-col items-center justify-center p-8">
-              <div className="w-24 h-24 bg-accent border-4 border-border flex items-center justify-center mb-6">
-                <span className="text-5xl">🤖</span>
+        <div className="h-full flex items-start justify-center pt-8 sm:pt-12 lg:pt-16 px-2 sm:px-4 lg:px-6">
+          <BrutalistCard className="max-w-3xl w-full p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col items-center justify-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-accent border-3 border-black flex items-center justify-center mb-4 sm:mb-6">
+                <span className="text-2xl sm:text-3xl lg:text-4xl">🤖</span>
               </div>
-              <div className="text-xl font-bold text-center mb-4">{interviewerMessage}</div>
+              <div className="text-base sm:text-lg lg:text-xl font-black text-center mb-3 sm:mb-4 uppercase tracking-wide">{interviewerMessage}</div>
               
               {/* Timer Display - Show when timer is active and has remaining time */}
               {isTimerActive && timeRemaining > 0 && (
-                <div className="mb-4">
-                  <BrutalistCard variant={timeRemaining <= 30 ? "error" : "accent"} className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="text-2xl">⏱️</div>
+                <div className="mb-3 sm:mb-4">
+                  <BrutalistCard variant={timeRemaining <= 30 ? "error" : "accent"} className="px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="text-lg sm:text-xl">⏱️</div>
                       <div className="text-center">
-                        <div className="text-lg font-bold">
+                        <div className="text-lg sm:text-xl font-black">
                           {formatTime(timeRemaining)}
                         </div>
-                        <div className="text-xs opacity-75">
+                        <div className="text-xs font-bold uppercase tracking-wide">
                           Time Remaining
                         </div>
                         {/* Debug info - remove this later */}
@@ -1282,16 +1305,56 @@ const TestPractice = () => {
                 </div>
               )}
               
+              {/* Controls positioned 50px below the text */}
+              <div className="mt-12 sm:mt-16">
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'} className="text-sm sm:text-base px-3 py-2">
+                      <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+                    </BrutalistButton>
+                    <span className="font-bold text-sm sm:text-base">{currentTime}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <BrutalistButton
+                      variant={isRecording ? 'destructive' : 'accent'}
+                      onClick={toggleVoiceRecording}
+                      className="text-sm sm:text-base px-3 py-2"
+                    >
+                      <Mic size={22} className="sm:w-6 sm:h-6" />
+                    </BrutalistButton>
+                    <BrutalistButton variant="primary" onClick={handleSendAnswer} className="text-sm sm:text-base px-3 py-2">
+                      <Send size={22} className="sm:w-6 sm:h-6" />
+                    </BrutalistButton>
+                    <BrutalistButton variant="destructive" onClick={handleEndInterview} className="text-sm sm:text-base px-3 py-2">
+                      <Phone size={22} className="sm:w-6 sm:h-6" />
+                    </BrutalistButton>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <BrutalistButton variant="secondary" onClick={() => setShowSettings(!showSettings)} className="text-sm sm:text-base px-3 py-2">
+                      <Settings size={22} className="sm:w-6 sm:h-6" />
+                    </BrutalistButton>
+                    <BrutalistButton variant="secondary" onClick={() => setShowChat(!showChat)} className="text-sm sm:text-base px-3 py-2">
+                      <MessageSquare size={22} className="sm:w-6 sm:h-6" />
+                    </BrutalistButton>
+                  </div>
+                </div>
+              </div>
               
             </div>
           </BrutalistCard>
         </div>
 
-        <div className="fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] z-50">
-          <BrutalistCard className={`${isSpeaking ? 'border-accent' : ''}`}>
-            <div className="flex items-center gap-2 mb-2 cursor-move">
-              <GripVertical size={20} className="text-muted-foreground" />
-              <div className="font-bold uppercase text-sm">Your Response</div>
+        <div className="fixed bottom-12 sm:bottom-16 lg:bottom-20 right-2 sm:right-4 lg:right-6 w-[calc(100vw-1rem)] sm:w-80 lg:w-96 max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)] lg:max-w-[calc(100vw-3rem)] z-50 draggable-panel" style={{ transition: isDragging ? 'none' : 'transform 0.1s ease-out' }}>
+          <BrutalistCard className={`${isSpeaking ? 'border-accent' : ''} p-4 sm:p-5`}>
+            <div 
+              className="flex items-center gap-2 mb-3 cursor-move select-none touch-none"
+              onMouseDown={handleDragStart}
+              onTouchStart={handleDragStart}
+            >
+              <GripVertical size={18} className="text-muted-foreground sm:w-6 sm:h-6" />
+              <div className="font-bold uppercase text-sm sm:text-base">Your Response</div>
             </div>
             <Textarea
               placeholder="Type or use the mic to reply..."
@@ -1303,7 +1366,7 @@ const TestPractice = () => {
                   handleSendAnswer();
                 }
               }}
-              className="min-h-[100px] border-2 border-border resize-none"
+              className="min-h-[80px] sm:min-h-[90px] border-2 border-border resize-none text-sm sm:text-base"
             />
             <div className="text-xs text-muted-foreground mt-2">
               Try: "send answer", "open chat", "end interview"
@@ -1312,21 +1375,21 @@ const TestPractice = () => {
         </div>
 
         {showChat && (
-          <div className="fixed right-0 top-0 h-full w-96 bg-secondary border-l-4 border-border z-40 overflow-hidden flex flex-col">
-            <div className="p-4 border-b-4 border-border flex justify-between items-center">
-              <h3 className="font-bold uppercase">In-call messages</h3>
+          <div className="fixed right-0 top-0 h-full w-full sm:w-80 lg:w-96 bg-background/80 backdrop-blur-md border-l-4 border-border z-40 overflow-hidden flex flex-col">
+            <div className="p-3 sm:p-4 border-b-4 border-border flex justify-between items-center">
+              <h3 className="font-bold uppercase text-sm sm:text-base">In-call messages</h3>
               <button
                 onClick={() => setShowChat(false)}
-                className="p-2 hover:bg-muted"
+                className="p-2 hover:bg-muted/50 rounded-md"
               >
                 ✕
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
               {chatHistory.map((msg, idx) => (
-                <div key={idx} className="border-2 border-border bg-background p-3">
-                  <div className="font-bold text-sm mb-1">{msg.sender}</div>
-                  <div className="text-sm">{msg.text}</div>
+                <div key={idx} className="border-2 border-border bg-background/60 backdrop-blur-sm p-2 sm:p-3 rounded-md">
+                  <div className="font-bold text-xs sm:text-sm mb-1">{msg.sender}</div>
+                  <div className="text-xs sm:text-sm">{msg.text}</div>
                 </div>
               ))}
             </div>
@@ -1334,30 +1397,31 @@ const TestPractice = () => {
         )}
 
         {showSettings && (
-          <div className="fixed right-0 top-0 h-full w-96 bg-secondary border-l-4 border-border z-40 overflow-hidden flex flex-col">
-            <div className="p-4 border-b-4 border-border flex justify-between items-center">
-              <h3 className="font-bold uppercase">Settings</h3>
+          <div className="fixed right-0 top-0 h-full w-full sm:w-80 lg:w-96 bg-background/80 backdrop-blur-md border-l-4 border-border z-40 overflow-hidden flex flex-col">
+            <div className="p-3 sm:p-4 border-b-4 border-border flex justify-between items-center">
+              <h3 className="font-bold uppercase text-sm sm:text-base">Settings</h3>
               <button
                 onClick={() => setShowSettings(false)}
-                className="p-2 hover:bg-muted"
+                className="p-2 hover:bg-muted/50 rounded-md"
               >
                 ✕
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
               <div>
-                <label className="block font-bold uppercase text-sm mb-2">Google Cloud API Key</label>
+                <label className="block font-bold uppercase text-xs sm:text-sm mb-2">Google Cloud API Key</label>
                 <BrutalistInput
                   type="password"
                   placeholder="Required for speech"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
+                  className="text-sm sm:text-base"
                 />
               </div>
               <div>
-                <label className="block font-bold uppercase text-sm mb-2">Interviewer Voice</label>
+                <label className="block font-bold uppercase text-xs sm:text-sm mb-2">Interviewer Voice</label>
                 <select
-                  className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border-2 border-border bg-background/60 backdrop-blur-sm text-primary font-medium focus:border-accent focus:outline-none text-sm sm:text-base rounded-md"
                   value={selectedVoice}
                   onChange={(e) => setSelectedVoice(e.target.value)}
                 >
@@ -1376,40 +1440,6 @@ const TestPractice = () => {
         )}
       </div>
 
-      <footer className="bg-secondary border-t-4 border-border p-4">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'}>
-              <ArrowLeft size={16} />
-            </BrutalistButton>
-            <span className="font-bold">{currentTime}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <BrutalistButton
-              variant={isRecording ? 'destructive' : 'accent'}
-              onClick={toggleVoiceRecording}
-            >
-              <Mic size={20} />
-            </BrutalistButton>
-            <BrutalistButton variant="primary" onClick={handleSendAnswer}>
-              <Send size={20} />
-            </BrutalistButton>
-            <BrutalistButton variant="destructive" onClick={handleEndInterview}>
-              <Phone size={20} />
-            </BrutalistButton>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <BrutalistButton variant="secondary" onClick={() => setShowSettings(!showSettings)}>
-              <Settings size={20} />
-            </BrutalistButton>
-            <BrutalistButton variant="secondary" onClick={() => setShowChat(!showChat)}>
-              <MessageSquare size={20} />
-            </BrutalistButton>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 
@@ -1420,64 +1450,76 @@ const TestPractice = () => {
     console.log('=== END RENDERING SUMMARY SCREEN ===');
     
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <BrutalistCard>
-          <h2 className="mb-6">Interview Summary</h2>
-
+      <div className="responsive-container py-8 sm:py-12 max-w-4xl">
+        <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-success border-3 border-black"></div>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight">Interview Summary</h2>
+        </div>
+        
+        <BrutalistCard className="p-6 sm:p-8">
           {summary ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <BrutalistCard variant="success">
-                <div className="text-sm font-bold uppercase mb-2">Technical Score</div>
-                <div className="text-4xl font-bold">{summary.technical_score}/100</div>
+          <div className="space-y-6 sm:space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <BrutalistCard variant="success" className="p-4 sm:p-6">
+                <div className="text-xs sm:text-sm font-black uppercase mb-2 sm:mb-3 tracking-wide">Technical Score</div>
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-black">{summary.technical_score}/100</div>
               </BrutalistCard>
-              <BrutalistCard variant="accent">
-                <div className="text-sm font-bold uppercase mb-2">Grammar Score</div>
-                <div className="text-4xl font-bold">{summary.grammatical_score}/100</div>
+              <BrutalistCard variant="accent" className="p-4 sm:p-6">
+                <div className="text-xs sm:text-sm font-black uppercase mb-2 sm:mb-3 tracking-wide">Grammar Score</div>
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-black">{summary.grammatical_score}/100</div>
               </BrutalistCard>
             </div>
 
             <div>
-              <h3 className="mb-3">Strong Points</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 bg-success border-2 border-black"></div>
+                <h3 className="text-xl font-black uppercase tracking-wide">Strong Points</h3>
+              </div>
               {summary.strong_points && summary.strong_points.length > 0 ? (
-                <ul className="list-disc list-inside space-y-2">
+                <ul className="list-disc list-inside space-y-3 font-medium">
                   {summary.strong_points.map((point, idx) => (
                     <li key={idx}>{point}</li>
                   ))}
                 </ul>
               ) : (
-                <p>None noted.</p>
+                <p className="text-muted-foreground font-medium">None noted.</p>
               )}
             </div>
 
             <div>
-              <h3 className="mb-3">Areas for Improvement</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 bg-destructive border-2 border-black"></div>
+                <h3 className="text-xl font-black uppercase tracking-wide">Areas for Improvement</h3>
+              </div>
               {summary.weak_points && summary.weak_points.length > 0 ? (
-                <ul className="list-disc list-inside space-y-2">
+                <ul className="list-disc list-inside space-y-3 font-medium">
                   {summary.weak_points.map((point, idx) => (
                     <li key={idx}>{point}</li>
                   ))}
                 </ul>
               ) : (
-                <p>None noted.</p>
+                <p className="text-muted-foreground font-medium">None noted.</p>
               )}
             </div>
 
             <div>
-              <h3 className="mb-3">Practice Recommendations</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 bg-accent border-2 border-black"></div>
+                <h3 className="text-xl font-black uppercase tracking-wide">Practice Recommendations</h3>
+              </div>
               {summary.practice_points && summary.practice_points.length > 0 ? (
-                <ul className="list-disc list-inside space-y-2">
+                <ul className="list-disc list-inside space-y-3 font-medium">
                   {summary.practice_points.map((point, idx) => (
                     <li key={idx}>{point}</li>
                   ))}
                 </ul>
               ) : (
-                <p>None noted.</p>
+                <p className="text-muted-foreground font-medium">None noted.</p>
               )}
             </div>
 
-            <div className="p-4 bg-secondary border-2 border-border">
-              <div className="text-sm">
+            <div className="p-6 bg-secondary border-3 border-black">
+              <div className="text-sm font-bold uppercase tracking-wide">
                 <strong>Interview Stats:</strong>{' '}
                 {summary.contextual_relevant ? 'Responses were relevant' : 'Some responses were off-topic'}
                 {summary.off_topic_count > 0 && ` (${summary.off_topic_count} off-topic responses)`}
@@ -1493,8 +1535,11 @@ const TestPractice = () => {
             </BrutalistButton>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No summary data available.</p>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-muted border-3 border-black flex items-center justify-center mb-6 mx-auto">
+              <span className="text-3xl">📊</span>
+            </div>
+            <p className="text-muted-foreground mb-6 font-medium text-lg">No summary data available.</p>
             <BrutalistButton
               variant="primary"
               size="full"
@@ -1504,9 +1549,9 @@ const TestPractice = () => {
             </BrutalistButton>
           </div>
         )}
-      </BrutalistCard>
-    </div>
-  );
+        </BrutalistCard>
+      </div>
+    );
   };
 
   return (

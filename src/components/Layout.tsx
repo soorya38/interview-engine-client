@@ -77,11 +77,14 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-primary border-b-4 border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-primary-foreground uppercase">
-              AI Interview Hub
+      <header className="luxury-glass-nav sticky top-0 z-50">
+        <div className="responsive-container py-4 sm:py-6 flex items-center justify-between">
+          <Link to="/dashboard" className="flex items-center group">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-violet-500 to-emerald-500 rounded-2xl mr-2 sm:mr-4 flex items-center justify-center shadow-2xl luxury-glow">
+              <BarChart3 className="text-white w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+            </div>
+            <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-medium text-white">
+              Interview Hub
             </h1>
           </Link>
 
@@ -89,32 +92,32 @@ const Layout = ({ children }: LayoutProps) => {
             <>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden text-primary-foreground"
+                className="md:hidden luxury-glass-button p-4 text-white hover:bg-white/20"
               >
-                <Menu size={32} />
+                <Menu size={20} />
               </button>
 
-              <nav className="hidden md:flex items-center gap-2">
+              <nav className="hidden md:flex items-center gap-2 lg:gap-4">
                 {navItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`px-4 py-2 border-4 font-bold uppercase flex items-center gap-2 ${
+                    className={`luxury-glass-button px-3 py-2 lg:px-6 lg:py-3 flex items-center gap-2 lg:gap-3 transition-all ${
                       isActive(item.path)
-                        ? 'bg-accent text-accent-foreground border-accent'
-                        : 'bg-primary-foreground text-primary border-primary-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent'
+                        ? 'bg-violet-500/20 text-violet-100 border-violet-500/30 luxury-neon-violet'
+                        : 'hover:bg-white/10 hover:border-white/30'
                     }`}
                   >
-                    <item.icon size={20} />
-                    <span className="hidden lg:inline">{item.label}</span>
+                    <item.icon size={16} className="lg:w-[18px] lg:h-[18px]" />
+                    <span className="hidden lg:inline text-xs lg:text-sm font-medium">{item.label}</span>
                   </Link>
                 ))}
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 border-4 border-destructive bg-destructive text-destructive-foreground font-bold uppercase flex items-center gap-2 hover:bg-destructive-foreground hover:text-destructive"
+                  className="luxury-glass-button px-3 py-2 lg:px-6 lg:py-3 bg-rose-500/20 text-rose-100 border-rose-500/30 flex items-center gap-2 lg:gap-3 hover:bg-rose-500/30 luxury-neon-rose"
                 >
-                  <LogOut size={20} />
-                  <span className="hidden lg:inline">Logout</span>
+                  <LogOut size={16} className="lg:w-[18px] lg:h-[18px]" />
+                  <span className="hidden lg:inline text-xs lg:text-sm font-medium">Logout</span>
                 </button>
               </nav>
             </>
@@ -122,29 +125,29 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {mobileMenuOpen && isAuthenticated && (
-          <nav className="md:hidden border-t-4 border-border bg-primary">
-            <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
+          <nav className="md:hidden luxury-glass-nav border-t border-white/20">
+            <div className="responsive-container py-4 sm:py-6 flex flex-col gap-3 sm:gap-4">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`px-4 py-3 border-4 font-bold uppercase flex items-center gap-2 ${
+                  className={`luxury-glass-button px-6 py-4 flex items-center gap-4 ${
                     isActive(item.path)
-                      ? 'bg-accent text-accent-foreground border-accent'
-                      : 'bg-primary-foreground text-primary border-primary-foreground'
+                      ? 'bg-violet-500/20 text-violet-100 border-violet-500/30 luxury-neon-violet'
+                      : 'hover:bg-white/10'
                   }`}
                 >
                   <item.icon size={20} />
-                  {item.label}
+                  <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               ))}
               <button
                 onClick={handleLogout}
-                className="px-4 py-3 border-4 border-destructive bg-destructive text-destructive-foreground font-bold uppercase flex items-center gap-2 text-left"
+                className="luxury-glass-button px-6 py-4 bg-rose-500/20 text-rose-100 border-rose-500/30 flex items-center gap-4 text-left hover:bg-rose-500/30 luxury-neon-rose"
               >
                 <LogOut size={20} />
-                Logout
+                <span className="text-sm font-medium">Logout</span>
               </button>
             </div>
           </nav>
@@ -153,11 +156,19 @@ const Layout = ({ children }: LayoutProps) => {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="bg-primary border-t-4 border-border">
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-primary-foreground font-bold">
-            © 2025 AI Interview Hub. All rights reserved.
-          </p>
+      <footer className="luxury-glass-nav border-t border-white/20">
+        <div className="responsive-container py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-violet-500 to-emerald-500 rounded-xl luxury-glow flex items-center justify-center">
+              <BarChart3 className="text-white w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+            <p className="text-center text-white/80 font-medium text-sm sm:text-base">
+              © 2025 AI Interview Hub. All rights reserved.
+            </p>
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-500 to-rose-500 rounded-xl luxury-glow flex items-center justify-center">
+              <BarChart3 className="text-white w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+          </div>
         </div>
       </footer>
     </div>

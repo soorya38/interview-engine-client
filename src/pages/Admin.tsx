@@ -152,14 +152,14 @@ const Admin = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-6 py-12">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="w-16 h-16 bg-accent border-4 border-border flex items-center justify-center mb-4 animate-spin mx-auto">
-                <Database size={32} className="animate-spin" />
+              <div className="w-20 h-20 bg-gradient-to-br from-accent to-accent/70 rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-lg">
+                <Database size={40} className="text-white" />
               </div>
-              <h2 className="text-xl font-bold mb-2">Loading Admin Panel</h2>
-              <p className="text-muted-foreground">Fetching topics and questions...</p>
+              <h2 className="text-2xl font-semibold mb-3">Loading Admin Panel</h2>
+              <p className="text-muted-foreground font-medium">Fetching topics and questions...</p>
             </div>
           </div>
         </div>
@@ -169,60 +169,71 @@ const Admin = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Admin Panel</h1>
-            <p className="text-xl font-bold uppercase">Manage Topics & Questions</p>
+      <div className="container mx-auto px-6 py-12 max-w-6xl">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-accent to-primary rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">⚙️</span>
+            </div>
+            <div>
+              <h1 className="text-4xl font-semibold">Admin Panel</h1>
+              <p className="text-2xl font-medium text-muted-foreground">Manage Topics & Questions</p>
+            </div>
           </div>
-          <BrutalistButton variant="secondary" onClick={() => window.location.href = '/'}>
+          <BrutalistButton variant="outline" onClick={() => window.location.href = '/'}>
             <ArrowLeft className="mr-2" size={16} />
             Back
           </BrutalistButton>
         </div>
 
         {/* Admin Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <BrutalistCard>
-            <div className="text-center p-4">
-              <Database size={32} className="mx-auto mb-2" />
-              <div className="text-2xl font-bold">{topics.length}</div>
-              <div className="text-sm font-bold uppercase">Topics</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <BrutalistCard className="p-6 hover:scale-105 transition-transform duration-300">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Database size={24} className="text-white" />
+              </div>
+              <div className="text-3xl font-semibold mb-2">{topics.length}</div>
+              <div className="text-sm font-medium">Topics</div>
             </div>
           </BrutalistCard>
-          <BrutalistCard>
-            <div className="text-center p-4">
-              <Settings size={32} className="mx-auto mb-2" />
-              <div className="text-2xl font-bold">{questions.length}</div>
-              <div className="text-sm font-bold uppercase">Questions</div>
+          <BrutalistCard className="p-6 hover:scale-105 transition-transform duration-300">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-success to-success/70 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Settings size={24} className="text-white" />
+              </div>
+              <div className="text-3xl font-semibold mb-2">{questions.length}</div>
+              <div className="text-sm font-medium">Questions</div>
             </div>
           </BrutalistCard>
-          <BrutalistCard>
-            <div className="text-center p-4">
-              <Shield size={32} className="mx-auto mb-2" />
-              <div className="text-2xl font-bold">Admin</div>
-              <div className="text-sm font-bold uppercase">Access Level</div>
+          <BrutalistCard className="p-6 hover:scale-105 transition-transform duration-300">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent/70 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Shield size={24} className="text-white" />
+              </div>
+              <div className="text-3xl font-semibold mb-2">Admin</div>
+              <div className="text-sm font-medium">Access Level</div>
             </div>
           </BrutalistCard>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-3 mb-8">
           <button
-            className={`px-4 py-2 border-2 font-bold uppercase text-sm ${
+            className={`glass-button px-6 py-3 font-medium text-sm ${
               activeTab === 'topics' 
-                ? 'border-primary bg-primary text-primary-foreground' 
-                : 'border-border bg-background text-foreground hover:bg-muted'
+                ? 'bg-primary/20 text-primary-foreground border-primary/30' 
+                : 'hover:bg-white/20'
             }`}
             onClick={() => setActiveTab('topics')}
           >
             Topics
           </button>
           <button
-            className={`px-4 py-2 border-2 font-bold uppercase text-sm ${
+            className={`glass-button px-6 py-3 font-medium text-sm ${
               activeTab === 'questions' 
-                ? 'border-primary bg-primary text-primary-foreground' 
-                : 'border-border bg-background text-foreground hover:bg-muted'
+                ? 'bg-primary/20 text-primary-foreground border-primary/30' 
+                : 'hover:bg-white/20'
             }`}
             onClick={() => setActiveTab('questions')}
           >
@@ -232,47 +243,49 @@ const Admin = () => {
 
         {/* Topics Tab */}
         {activeTab === 'topics' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Create Topic */}
-            <BrutalistCard>
-              <div className="p-6">
-                <h3 className="text-lg font-bold mb-4">Create New Topic</h3>
-                <div className="flex gap-2">
-                  <BrutalistInput
-                    type="text"
-                    placeholder="Enter topic name"
-                    value={newTopicName}
-                    onChange={(e) => setNewTopicName(e.target.value)}
-                    className="flex-1"
-                  />
-                  <BrutalistButton 
-                    variant="primary" 
-                    onClick={handleCreateTopic}
-                    disabled={!newTopicName.trim()}
-                  >
-                    <Plus size={16} />
-                  </BrutalistButton>
-                </div>
+            <BrutalistCard className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-6 h-6 bg-primary border-2 border-black"></div>
+                <h3 className="text-xl font-black uppercase tracking-wide">Create New Topic</h3>
+              </div>
+              <div className="flex gap-3">
+                <BrutalistInput
+                  type="text"
+                  placeholder="Enter topic name"
+                  value={newTopicName}
+                  onChange={(e) => setNewTopicName(e.target.value)}
+                  className="flex-1"
+                />
+                <BrutalistButton 
+                  variant="primary" 
+                  onClick={handleCreateTopic}
+                  disabled={!newTopicName.trim()}
+                >
+                  <Plus size={16} />
+                </BrutalistButton>
               </div>
             </BrutalistCard>
 
             {/* Topics List */}
-            <BrutalistCard>
-              <div className="p-6">
-                <h3 className="text-lg font-bold mb-4">Existing Topics</h3>
-                <div className="space-y-2">
-                  {topics.map((topic) => (
-                    <div key={topic.ID} className="p-3 border-2 border-border bg-background">
-                      <div className="font-bold text-foreground">{topic.Topic}</div>
-                      <div className="text-xs text-muted-foreground">ID: {topic.ID}</div>
-                    </div>
-                  ))}
-                  {topics.length === 0 && (
-                    <div className="p-3 border-2 border-border bg-muted text-center text-muted-foreground">
-                      No topics found. Create one above.
-                    </div>
-                  )}
-                </div>
+            <BrutalistCard className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-6 h-6 bg-success border-2 border-black"></div>
+                <h3 className="text-xl font-black uppercase tracking-wide">Existing Topics</h3>
+              </div>
+              <div className="space-y-3">
+                {topics.map((topic) => (
+                  <div key={topic.ID} className="p-4 border-3 border-black bg-background">
+                    <div className="font-black text-foreground text-lg">{topic.Topic}</div>
+                    <div className="text-sm text-muted-foreground font-medium">ID: {topic.ID}</div>
+                  </div>
+                ))}
+                {topics.length === 0 && (
+                  <div className="p-6 border-3 border-black bg-muted text-center text-muted-foreground">
+                    <div className="text-lg font-medium">No topics found. Create one above.</div>
+                  </div>
+                )}
               </div>
             </BrutalistCard>
           </div>
@@ -280,113 +293,114 @@ const Admin = () => {
 
         {/* Questions Tab */}
         {activeTab === 'questions' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Create Question */}
-            <BrutalistCard>
-              <div className="p-6">
-                <h3 className="text-lg font-bold mb-4">Create New Question</h3>
-                <div className="space-y-4">
+            <BrutalistCard className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-6 h-6 bg-accent border-2 border-black"></div>
+                <h3 className="text-xl font-black uppercase tracking-wide">Create New Question</h3>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block font-black uppercase text-sm mb-3 tracking-wide">Topic</label>
+                  <select
+                    className="w-full px-4 py-3 border-3 border-black bg-input text-foreground font-bold focus:border-accent focus:outline-none"
+                    value={newQuestion.topic_id}
+                    onChange={(e) => setNewQuestion(prev => ({ ...prev, topic_id: e.target.value }))}
+                  >
+                    <option value="">Select a topic...</option>
+                    {topics.map((topic) => (
+                      <option key={topic.ID} value={topic.ID}>
+                        {topic.Topic}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block font-black uppercase text-sm mb-3 tracking-wide">Question Text</label>
+                  <Textarea
+                    placeholder="Enter the question text..."
+                    value={newQuestion.text}
+                    onChange={(e) => setNewQuestion(prev => ({ ...prev, text: e.target.value }))}
+                    className="min-h-[120px] border-3 border-black resize-none"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block font-bold uppercase text-sm mb-2">Topic</label>
-                    <select
-                      className="w-full px-4 py-3 border-2 border-border bg-input text-primary font-medium focus:border-accent focus:outline-none"
-                      value={newQuestion.topic_id}
-                      onChange={(e) => setNewQuestion(prev => ({ ...prev, topic_id: e.target.value }))}
-                    >
-                      <option value="">Select a topic...</option>
-                      {topics.map((topic) => (
-                        <option key={topic.ID} value={topic.ID}>
-                          {topic.Topic}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block font-bold uppercase text-sm mb-2">Question Text</label>
-                    <Textarea
-                      placeholder="Enter the question text..."
-                      value={newQuestion.text}
-                      onChange={(e) => setNewQuestion(prev => ({ ...prev, text: e.target.value }))}
-                      className="min-h-[100px] border-2 border-border resize-none"
+                    <label className="block font-black uppercase text-sm mb-3 tracking-wide">Tags (comma-separated)</label>
+                    <BrutalistInput
+                      type="text"
+                      placeholder="e.g., javascript, algorithms, data-structures"
+                      value={newQuestion.tags}
+                      onChange={(e) => setNewQuestion(prev => ({ ...prev, tags: e.target.value }))}
                     />
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block font-bold uppercase text-sm mb-2">Tags (comma-separated)</label>
-                      <BrutalistInput
-                        type="text"
-                        placeholder="e.g., javascript, algorithms, data-structures"
-                        value={newQuestion.tags}
-                        onChange={(e) => setNewQuestion(prev => ({ ...prev, tags: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-bold uppercase text-sm mb-2">Time Limit (minutes)</label>
-                      <BrutalistInput
-                        type="number"
-                        placeholder="e.g., 15"
-                        value={newQuestion.time_minutes}
-                        onChange={(e) => setNewQuestion(prev => ({ ...prev, time_minutes: e.target.value }))}
-                        min="1"
-                        max="120"
-                      />
-                    </div>
+                  <div>
+                    <label className="block font-black uppercase text-sm mb-3 tracking-wide">Time Limit (minutes)</label>
+                    <BrutalistInput
+                      type="number"
+                      placeholder="e.g., 15"
+                      value={newQuestion.time_minutes}
+                      onChange={(e) => setNewQuestion(prev => ({ ...prev, time_minutes: e.target.value }))}
+                      min="1"
+                      max="120"
+                    />
                   </div>
-                  
-                  <BrutalistButton 
-                    variant="primary" 
-                    onClick={handleCreateQuestion}
-                    disabled={!newQuestion.text.trim() || !newQuestion.topic_id}
-                  >
-                    <Plus className="mr-2" size={16} />
-                    Create Question
-                  </BrutalistButton>
                 </div>
+                
+                <BrutalistButton 
+                  variant="primary" 
+                  onClick={handleCreateQuestion}
+                  disabled={!newQuestion.text.trim() || !newQuestion.topic_id}
+                >
+                  <Plus className="mr-2" size={16} />
+                  Create Question
+                </BrutalistButton>
               </div>
             </BrutalistCard>
 
             {/* Questions List */}
-            <BrutalistCard>
-              <div className="p-6">
-                <h3 className="text-lg font-bold mb-4">Existing Questions</h3>
-                <div className="space-y-3">
-                  {questions.map((question) => (
-                    <div key={question.id} className="p-4 border-2 border-border bg-background">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <div className="font-bold text-foreground mb-1">{question.question}</div>
-                          <div className="text-sm text-muted-foreground">
-                            Topic: {topics.find(t => t.ID === question.topic_id)?.Topic || 'Unknown'}
-                          </div>
-                          {question.tags && question.tags.length > 0 && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Tags: {question.tags.join(', ')}
-                            </div>
-                          )}
-                          {question.time_minutes && (
-                            <div className="text-xs text-muted-foreground">
-                              Time Limit: {question.time_minutes} minutes
-                            </div>
-                          )}
+            <BrutalistCard className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-6 h-6 bg-destructive border-2 border-black"></div>
+                <h3 className="text-xl font-black uppercase tracking-wide">Existing Questions</h3>
+              </div>
+              <div className="space-y-4">
+                {questions.map((question) => (
+                  <div key={question.id} className="p-6 border-3 border-black bg-background">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <div className="font-black text-foreground text-lg mb-2">{question.question}</div>
+                        <div className="text-sm text-muted-foreground font-medium mb-2">
+                          Topic: {topics.find(t => t.ID === question.topic_id)?.Topic || 'Unknown'}
                         </div>
-                        <BrutalistButton
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteQuestion(question.id)}
-                        >
-                          Delete
-                        </BrutalistButton>
+                        {question.tags && question.tags.length > 0 && (
+                          <div className="text-sm text-muted-foreground font-medium mb-1">
+                            Tags: {question.tags.join(', ')}
+                          </div>
+                        )}
+                        {question.time_minutes && (
+                          <div className="text-sm text-muted-foreground font-medium">
+                            Time Limit: {question.time_minutes} minutes
+                          </div>
+                        )}
                       </div>
+                      <BrutalistButton
+                        variant="destructive"
+                        onClick={() => handleDeleteQuestion(question.id)}
+                      >
+                        Delete
+                      </BrutalistButton>
                     </div>
-                  ))}
-                  {questions.length === 0 && (
-                    <div className="p-4 border-2 border-border bg-muted text-center text-muted-foreground">
-                      No questions found. Create one above.
-                    </div>
-                  )}
-                </div>
+                  </div>
+                ))}
+                {questions.length === 0 && (
+                  <div className="p-6 border-3 border-black bg-muted text-center text-muted-foreground">
+                    <div className="text-lg font-medium">No questions found. Create one above.</div>
+                  </div>
+                )}
               </div>
             </BrutalistCard>
           </div>
